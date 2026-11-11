@@ -1089,24 +1089,20 @@ button:focus-visible {
   width: 100%;
   max-width: 420px;
 }
-#aForm,
-#aDone {
+.aview {
   width: 100%;
   max-width: 380px;
   flex-direction: column;
   gap: 12px;
 }
-#aForm {
-  display: flex;
-}
-#aForm label {
+.aview label {
   display: flex;
   flex-direction: column;
   gap: 4px;
   font-weight: 800;
   font-size: 15px;
 }
-#aForm input {
+.aview input {
   font: inherit;
   font-size: 18px;
   font-weight: 600;
@@ -1118,27 +1114,33 @@ button:focus-visible {
   user-select: text;
   -webkit-user-select: text;
 }
-#aForm input:focus {
+.aview input:focus {
   outline: none;
   border-color: var(--accent);
 }
-.ahint {
-  margin-top: -6px;
-  opacity: 0.8;
-}
-#aSubmit:disabled {
+.aview button:disabled {
   opacity: 0.5;
+  cursor: not-allowed;
 }
-#aMsg {
+.ahint {
+  margin: -6px 0 0;
+  opacity: 0.8;
+  line-height: 1.5;
+}
+.amsg {
   min-height: 1.4em;
   text-align: center;
   font-weight: 700;
+  line-height: 1.5;
 }
-#aMsg.err,
-#aDone .err {
+.amsg.err {
   color: #ffb3b3;
 }
-#aDone {
+.amsg.ok {
+  color: #4ade80;
+}
+#aDone,
+#aMe {
   align-items: center;
   text-align: center;
 }
@@ -1151,54 +1153,32 @@ button:focus-visible {
   margin: 4px 0;
   line-height: 1.6;
 }
-#aReset {
-  display: flex;
-  width: 100%;
-  max-width: 380px;
-  flex-direction: column;
-  gap: 12px;
-}
-#aReset h3 {
-  margin: 0;
-  font-size: 22px;
-  text-align: center;
-}
-#aReset label {
+.mecard {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 4px;
-  font-weight: 800;
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 16px;
+  padding: 16px;
 }
-#aReset input {
-  font: inherit;
-  font-size: 18px;
-  font-weight: 600;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 3px solid rgba(255, 255, 255, 0.25);
-  background: rgba(0, 0, 0, 0.35);
-  color: #fff;
-  user-select: text;
-  -webkit-user-select: text;
+.meav {
+  font-size: 48px;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-#aReset input:focus {
-  outline: none;
-  border-color: var(--accent);
+.mecard b {
+  font-size: 24px;
 }
-#aRMsg {
-  min-height: 1.4em;
-  text-align: center;
-  font-weight: 700;
-  line-height: 1.5;
-}
-#aRMsg.err {
-  color: #ffb3b3;
-}
-#aRMsg.ok {
-  color: #4ade80;
-}
-#aRSubmit:disabled {
-  opacity: 0.5;
+.mecard small {
+  opacity: 0.8;
 }
 button.link {
   background: none;

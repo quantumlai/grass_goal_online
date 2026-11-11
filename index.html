@@ -90,14 +90,28 @@
         ><button class="arrow" id="dNext" aria-label="下一個角色">›</button>
       </div>
     </div>
-    <!-- 建立帳號 -->
+    <!-- 帳號:登入 / 建立帳號 / 忘記密碼 / 註冊完成 / 我的帳號 -->
     <div id="acct" style="display: none">
       <div class="rtop">
         <button id="aBack" class="ch">⬅ 返回</button>
-        <h2 id="aTitle">建立帳號</h2>
+        <h2 id="aTitle">登入</h2>
         <span></span>
       </div>
-      <form id="aForm" novalidate>
+      <form id="aLogin" class="aview" novalidate>
+        <label
+          >Email
+          <input id="aLEmail" type="email" autocomplete="username" required
+        /></label>
+        <label
+          >密碼
+          <input id="aLPw" type="password" autocomplete="current-password" required
+        /></label>
+        <button id="aLSubmit" type="submit">登入</button>
+        <div id="aLMsg" class="amsg" role="status" aria-live="polite"></div>
+        <button id="aLToReset" type="button" class="link">忘記密碼?</button>
+        <button id="aLToSignup" type="button" class="link">還沒有帳號?建立帳號</button>
+      </form>
+      <form id="aForm" class="aview" novalidate>
         <label
           >Email
           <input id="aEmail" type="email" autocomplete="email" required
@@ -116,25 +130,34 @@
           <input id="aName" type="text" maxlength="16" autocomplete="nickname"
         /></label>
         <button id="aSubmit" type="submit">建立帳號</button>
-        <div id="aMsg" role="status" aria-live="polite"></div>
-        <button id="aToReset" type="button" class="link">忘記密碼?</button>
+        <div id="aMsg" class="amsg" role="status" aria-live="polite"></div>
+        <button id="aToLogin" type="button" class="link">已經有帳號?登入</button>
       </form>
-      <form id="aReset" novalidate style="display: none">
+      <form id="aReset" class="aview" novalidate>
         <p class="ahint">輸入註冊時用的 Email,我們會寄一封重設密碼的信過去,點信裡的連結就能設定新密碼。</p>
         <label
           >Email
           <input id="aREmail" type="email" autocomplete="email" required
         /></label>
         <button id="aRSubmit" type="submit">寄送重設密碼信</button>
-        <div id="aRMsg" role="status" aria-live="polite"></div>
-        <button id="aToForm" type="button" class="link">⬅ 回到建立帳號</button>
+        <div id="aRMsg" class="amsg" role="status" aria-live="polite"></div>
+        <button id="aRToLogin" type="button" class="link">⬅ 回到登入</button>
       </form>
-      <div id="aDone" style="display: none">
+      <div id="aDone" class="aview">
         <h3>✅ 帳號建立成功</h3>
         <div id="aDoneBody"></div>
-        <button id="aDoneHome">返回首頁</button>
-        <button id="aDoneReset" class="ch">忘記密碼?</button>
-        <button id="aForget" class="ch">在這台裝置忘記這個帳號</button>
+        <button id="aDoneLogin">前往登入</button>
+      </div>
+      <div id="aMe" class="aview">
+        <div class="mecard">
+          <div class="meav">👤</div>
+          <b id="aMeName"></b>
+          <small id="aMeEmail"></small>
+        </div>
+        <div id="aMeMsg" class="amsg" role="status" aria-live="polite"></div>
+        <button id="aMeHome">返回首頁</button>
+        <button id="aMeReset" class="ch">重設密碼</button>
+        <button id="aLogout" class="ch">登出</button>
       </div>
     </div>
     <!-- 比賽結果:顯示比分與勝場獎勵,接著一定要做數學挑戰 -->

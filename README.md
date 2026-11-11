@@ -210,22 +210,34 @@
 
 `domain-key` 和 game key 是給遊戲客戶端使用的公開金鑰，本來就會出現在瀏覽器裡。**不要**把 LootLocker 後台的 server key 或帳號密碼放進前端程式。
 
-### 建立帳號
+### 帳號功能
 
-首頁的「👤 建立帳號」使用 LootLocker 的 White Label Login：
+首頁的「👤 登入 / 註冊」按鈕會打開帳號頁；登入後按鈕會顯示名稱（沒有名稱就顯示 Email）。帳號頁有五個畫面：
 
-1. 輸入 Email、密碼（至少 8 個字元，這是 LootLocker 伺服器的規定）、再輸入一次密碼，使用者名稱可以不填（2～16 個字）。
-2. 呼叫 `white-label-login/sign-up` 建立帳號，LootLocker 會寄出驗證信。
-3. 如果有填名稱，接著依序登入（`white-label-login/login`）、開遊戲 session（`game/v2/session/white-label`），再設定名稱（`PATCH game/player/name`）。如果後台規定 Email 驗證後才能登入，這一步會失敗，但帳號本身已經建立成功，畫面上會說明原因。
+| 畫面 | 說明 |
+| --- | --- |
+| 登入 | 未登入時預設顯示。輸入 Email 和密碼，呼叫 `white-label-login/login`（記住我），再用拿到的 token 開遊戲 session（`game/v2/session/white-label`），並讀取玩家名稱 |
+| 建立帳號 | Email、密碼（至少 8 個字元，這是 LootLocker 伺服器的規定）、確認密碼，名稱可以不填（2～16 個字）。呼叫 `white-label-login/sign-up` 後會自動嘗試登入 |
+| 註冊完成 | 如果後台規定 Email 驗證後才能登入，建立帳號後會停在這裡，提醒先去收驗證信再登入 |
+| 忘記密碼 | 見下一節 |
+| 我的帳號 | 顯示名稱和 Email，可以返回首頁、重設密碼或登出 |
+
+**名稱：** 名稱要登入後才能設定（`PATCH game/player/name`）。註冊時填的名稱會先記在裝置上，登入成功時才設定，所以就算要先驗證 Email，名稱也不會遺失。
+
+**自動登入：** 重新打開網頁時，會用記住的 token 呼叫 `white-label-login/verify-session` 確認還有效，再開新的遊戲 session。token 失效就自動登出；連不上網路則先保留登入狀態。
+
+**登出：** 呼叫 `DELETE game/v1/session` 結束遊戲 session，並清掉裝置上的登入資料。就算伺服器那邊失敗，這台裝置也一樣會登出。
 
 ### 忘記密碼
 
-建立帳號畫面（以及帳號建立成功的畫面）都有「忘記密碼？」按鈕。輸入 Email 後，遊戲會呼叫 `white-label-login/request-reset-password`，LootLocker 寄出重設密碼的信，使用者點信裡的連結，到 LootLocker 提供的網頁設定新密碼；那個網頁的名稱和 Logo 在 LootLocker 後台的平台設定裡調整。
+登入畫面有「忘記密碼？」，「我的帳號」畫面有「重設密碼」。輸入 Email 後，遊戲會呼叫 `white-label-login/request-reset-password`，LootLocker 寄出重設密碼的信，使用者點信裡的連結，到 LootLocker 提供的網頁設定新密碼；那個網頁的名稱和 Logo 在 LootLocker 後台的平台設定裡調整。
 
 - 為了不透露某個 Email 有沒有註冊過，畫面一律顯示「如果這個 Email 有註冊過，重設密碼的信已經寄出」。
 - 寄出後 30 秒內不能再按，避免連按一直寄信。
 
-這台裝置只會記住 Email、名稱和玩家 ID（存在 `localStorage` 的 `brawlAccount_<環境>`），**不會**記住密碼。開發環境和正式環境的帳號分開存。
+### 裝置上存了什麼
+
+這台裝置只會記住 Email、名稱、玩家 ID 和 LootLocker 發的登入 token（存在 `localStorage` 的 `brawlAccount_<環境>`），**不會**記住密碼。開發環境和正式環境的登入狀態分開存。所有 LootLocker 請求都有 15 秒逾時。
 
 **LootLocker 後台需要先做的設定：** 到後台啟用 **White Label Login** 平台，並設定驗證信的寄件資訊。還沒啟用之前，API 會回傳 `platform is not enabled`，畫面上會顯示「帳號功能還沒開通」。
 
@@ -236,7 +248,7 @@ index.html        頁面結構
 css/style.css     樣式
 js/
   config.js       開發／正式環境設定（LootLocker 網域與金鑰）
-  lootlocker.js   LootLocker API（註冊、登入、開 session、設定名稱）
+  lootlocker.js   LootLocker API（註冊、登入、自動登入、登出、名稱、重設密碼）
   setup.js        畫布、尺寸、地圖（牆、草叢）
   characters.js   角色資料表
   state.js        存檔、升級、隊伍建立、重置比賽
@@ -249,7 +261,7 @@ js/
   shop.js         商店(屬性升級、武裝配件、造型)
   math.js         數學題庫與 2 分鐘數學挑戰
   rewards.js      比賽結算、每日勝場、英雄解鎖與升級
-  account.js      建立帳號畫面
+  account.js      帳號頁（登入、建立帳號、忘記密碼、登出）
   main.js         主迴圈與啟動
 ```
 

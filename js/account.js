@@ -1,60 +1,150 @@
-// 建立帳號畫面(Email + 密碼,可自訂使用者名稱)
+// 帳號:登入 / 建立帳號 / 忘記密碼 / 我的帳號(登出)
+// 裝置上只記住 Email、名稱、玩家 ID 和 LootLocker 發的登入 token,不記住密碼。
 const acctScr = document.getElementById("acct"),
   aEl = (id) => document.getElementById(id),
   ACCT_KEY = "brawlAccount_" + ENV_NAME, // 開發、正式環境的帳號分開存
+  PEND_KEY = "brawlPendingName_" + ENV_NAME, // 註冊時沒設成功的名稱,第一次登入時補設
   NAME_MIN = 2,
-  NAME_MAX = 16;
-let acct = null;
-try {
-  acct = JSON.parse(localStorage.getItem(ACCT_KEY) || "null");
-} catch (e) {}
-function saveAcct() {
-  try {
-    localStorage.setItem(ACCT_KEY, JSON.stringify(acct));
-  } catch (e) {}
+  NAME_MAX = 16,
+  EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const store = {
+  get(k) {
+    try {
+      return JSON.parse(localStorage.getItem(k) || "null");
+    } catch (e) {
+      return null;
+    }
+  },
+  set(k, v) {
+    try {
+      if (v == null) localStorage.removeItem(k);
+      else localStorage.setItem(k, JSON.stringify(v));
+    } catch (e) {}
+  },
+};
+// acct = { email, name, playerId, publicUid, wlToken(記住我), session(遊戲 session) }
+let acct = store.get(ACCT_KEY);
+if (acct && !acct.wlToken) acct = null; // 舊版只存了 Email 的資料,不算登入
+const escHtml = (s) =>
+  String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+
+// ── 畫面切換 ──
+const VIEWS = {
+  aLogin: "登入",
+  aForm: "建立帳號",
+  aReset: "🔑 忘記密碼",
+  aDone: "建立帳號",
+  aMe: "我的帳號",
+};
+function setMsg(id, text, cls) {
+  aEl(id).textContent = text || "";
+  aEl(id).className = "amsg" + (cls ? " " + cls : "");
 }
-function updAcctBtn() {
-  aEl("hAcct").textContent = acct ? "👤 " + (acct.name || acct.email) : "👤 建立帳號";
-  const t = aEl("envTag");
-  t.textContent = "DEV · " + ENV.name;
-  t.style.display = ENV_NAME === "development" ? "" : "none";
+function view(v) {
+  Object.keys(VIEWS).forEach((id) => (aEl(id).style.display = id === v ? "flex" : "none"));
+  aEl("aTitle").textContent = VIEWS[v];
+  ["aLMsg", "aMsg", "aRMsg", "aMeMsg"].forEach((id) => setMsg(id));
+  // 這個環境還沒設定 LootLocker 時,所有送出按鈕都停用
+  ["aLSubmit", "aSubmit", "aRSubmit"].forEach((id) => (aEl(id).disabled = !llReady()));
+  const off = { aLogin: "aLMsg", aForm: "aMsg", aReset: "aRMsg" }[v];
+  if (off && !llReady()) setMsg(off, ENV.name + "還沒設定 LootLocker,暫時不能使用帳號功能。", "err");
+  if (v === "aMe") renderMe();
 }
-function showAcct() {
+function showAcct(v) {
   homeOn = true;
   [home, ui, shopScr, sdetail, roster, detail].forEach((el) => (el.style.display = "none"));
   detailOn = false;
   acctScr.style.display = "flex";
-  aEl("aMsg").textContent = "";
-  aEl("aMsg").className = "";
-  if (acct) return showAcctDone();
-  aEl("aForm").style.display = "flex";
-  aEl("aDone").style.display = "none";
-  aEl("aReset").style.display = "none";
-  aEl("aTitle").textContent = "建立帳號";
-  if (!llReady()) {
-    aEl("aMsg").textContent = ENV.name + "還沒設定 LootLocker,暫時不能建立帳號。";
-    aEl("aMsg").className = "err";
-    aEl("aSubmit").disabled = true;
+  view(v || (acct ? "aMe" : "aLogin"));
+}
+function updAcctBtn() {
+  aEl("hAcct").textContent = acct ? "👤 " + (acct.name || acct.email) : "👤 登入 / 註冊";
+  const t = aEl("envTag");
+  t.textContent = "DEV · " + ENV.name;
+  t.style.display = ENV_NAME === "development" ? "" : "none";
+}
+function renderMe() {
+  aEl("aMeName").textContent = acct.name || "(還沒設定名稱)";
+  aEl("aMeEmail").textContent = acct.email;
+}
+
+// ── 登入狀態 ──
+function setPendingName(email, name) {
+  store.set(PEND_KEY, name ? { email, name } : null);
+}
+// 拿到 White Label token 之後:開遊戲 session、補設或讀取名稱、存起來
+async function finishLogin(email, wlToken) {
+  const s = await llStartSession(email, wlToken);
+  let name = "";
+  const pend = store.get(PEND_KEY);
+  if (pend && pend.email === email) {
+    try {
+      await llSetName(s.session_token, pend.name);
+      name = pend.name;
+      setPendingName(null);
+    } catch (e) {}
+  }
+  if (!name) {
+    try {
+      name = (await llGetName(s.session_token)).name || "";
+    } catch (e) {}
+  }
+  acct = {
+    email,
+    name,
+    playerId: s.player_id,
+    publicUid: s.public_uid,
+    wlToken,
+    session: s.session_token,
+  };
+  store.set(ACCT_KEY, acct);
+  updAcctBtn();
+}
+async function doLogin(email, pw) {
+  const l = await llLogin(email, pw);
+  await finishLogin(email, l.session_token);
+}
+function clearLogin() {
+  acct = null;
+  store.set(ACCT_KEY, null);
+  updAcctBtn();
+}
+// 重新打開網頁時,用記住的 token 自動登入;token 失效就登出,連不上網路就先保留
+async function restoreLogin() {
+  if (!acct || !llReady()) return;
+  const { email, wlToken } = acct;
+  try {
+    await llVerifySession(email, wlToken);
+    await finishLogin(email, wlToken);
+  } catch (e) {
+    if (e.status !== 0) clearLogin();
   }
 }
-function showAcctDone(nameErr) {
-  aEl("aForm").style.display = "none";
-  aEl("aReset").style.display = "none";
-  aEl("aTitle").textContent = "我的帳號";
-  aEl("aDone").style.display = "flex";
-  aEl("aDoneBody").innerHTML =
-    "<p>帳號:<b>" +
-    escHtml(acct.email) +
-    "</b></p>" +
-    (acct.name ? "<p>名稱:<b>" + escHtml(acct.name) + "</b></p>" : "") +
-    (nameErr ? '<p class="err">名稱還沒設定成功:' + escHtml(nameErr) + "</p>" : "") +
-    "<p>📧 我們寄了一封驗證信到這個信箱,請打開信件完成驗證,帳號才能使用。</p>";
-}
-const escHtml = (s) =>
-  String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
+// ── 登入 ──
+aEl("aLogin").onsubmit = async (ev) => {
+  ev.preventDefault();
+  const email = aEl("aLEmail").value.trim(),
+    pw = aEl("aLPw").value,
+    btn = aEl("aLSubmit");
+  if (!EMAIL_RE.test(email)) return setMsg("aLMsg", "請輸入正確的 Email。", "err");
+  if (!pw) return setMsg("aLMsg", "請輸入密碼。", "err");
+  btn.disabled = true;
+  setMsg("aLMsg", "登入中…");
+  try {
+    await doLogin(email, pw);
+    aEl("aLPw").value = "";
+    view("aMe");
+    setMsg("aMeMsg", "🎉 登入成功!", "ok");
+  } catch (e) {
+    setMsg("aLMsg", llErrorText(e), "err");
+  }
+  btn.disabled = !llReady();
+};
+
+// ── 建立帳號 ──
 function validate(email, pw, pw2, name) {
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "請輸入正確的 Email。";
+  if (!EMAIL_RE.test(email)) return "請輸入正確的 Email。";
   if (pw.length < 8) return "密碼至少要 8 個字元。"; // LootLocker 伺服器的規定
   if (pw !== pw2) return "兩次輸入的密碼不一樣。";
   if (name && (name.length < NAME_MIN || name.length > NAME_MAX))
@@ -67,101 +157,96 @@ aEl("aForm").onsubmit = async (ev) => {
     pw = aEl("aPw").value,
     pw2 = aEl("aPw2").value,
     name = aEl("aName").value.trim(),
-    msg = aEl("aMsg"),
     btn = aEl("aSubmit");
   const bad = validate(email, pw, pw2, name);
-  msg.className = bad ? "err" : "";
-  msg.textContent = bad;
-  if (bad) return;
+  if (bad) return setMsg("aMsg", bad, "err");
   btn.disabled = true;
-  msg.textContent = "建立帳號中…";
+  setMsg("aMsg", "建立帳號中…");
   try {
     await llSignUp(email, pw);
   } catch (e) {
-    msg.className = "err";
-    msg.textContent = llErrorText(e);
-    btn.disabled = false;
+    setMsg("aMsg", llErrorText(e), "err");
+    btn.disabled = !llReady();
     return;
   }
-  acct = { email, name: "" };
-  let nameErr = "";
-  // 設定名稱需要遊戲 session:登入 → 開 session → 改名。
-  // 如果後台設定「Email 驗證後才能登入」,這一步會失敗,帳號本身仍然建立成功。
-  if (name) {
-    msg.textContent = "設定名稱中…";
-    try {
-      const l = await llLogin(email, pw);
-      const s = await llStartSession(email, l.session_token);
-      await llSetName(s.session_token, name);
-      acct.name = name;
-      acct.publicUid = s.public_uid;
-    } catch (e) {
-      nameErr = llErrorText(e);
-    }
-  }
-  saveAcct();
   ["aPw", "aPw2"].forEach((id) => (aEl(id).value = ""));
-  btn.disabled = false;
-  updAcctBtn();
-  showAcctDone(nameErr);
-};
-// 只清掉這台裝置上記住的帳號資訊,不會刪除 LootLocker 上的帳號
-aEl("aForget").onclick = () => {
-  acct = null;
+  btn.disabled = !llReady();
+  // 名稱要登入後才能設定;先記下來,登入時(現在或驗證 Email 之後)再設
+  setPendingName(email, name);
   try {
-    localStorage.removeItem(ACCT_KEY);
-  } catch (e) {}
-  updAcctBtn();
-  showAcct();
+    await doLogin(email, pw);
+    view("aMe");
+    setMsg("aMeMsg", "✅ 帳號建立成功!記得到信箱完成 Email 驗證。", "ok");
+  } catch (e) {
+    // 後台設定「Email 驗證後才能登入」時會走到這裡
+    aEl("aDoneBody").innerHTML =
+      "<p>帳號:<b>" +
+      escHtml(email) +
+      "</b></p><p>📧 我們寄了一封驗證信到這個信箱,請打開信件完成驗證,再回來登入。</p>" +
+      (name ? "<p>名稱「" + escHtml(name) + "」會在第一次登入時設定。</p>" : "");
+    aEl("aLEmail").value = email;
+    view("aDone");
+  }
 };
+
 // ── 忘記密碼 ──
 function showReset() {
-  acctScr.style.display = "flex";
-  aEl("aForm").style.display = "none";
-  aEl("aDone").style.display = "none";
-  aEl("aReset").style.display = "flex";
-  aEl("aTitle").textContent = "🔑 忘記密碼";
-  aEl("aREmail").value = aEl("aEmail").value.trim() || (acct ? acct.email : "");
-  aEl("aRMsg").textContent = "";
-  aEl("aRMsg").className = "";
-  aEl("aRSubmit").disabled = !llReady();
-  if (!llReady()) {
-    aEl("aRMsg").textContent = ENV.name + "還沒設定 LootLocker,暫時不能重設密碼。";
-    aEl("aRMsg").className = "err";
-  }
+  view("aReset");
+  aEl("aREmail").value =
+    aEl("aLEmail").value.trim() || aEl("aEmail").value.trim() || (acct ? acct.email : "");
 }
-aEl("aToReset").onclick = showReset;
-aEl("aToForm").onclick = showAcct;
 aEl("aReset").onsubmit = async (ev) => {
   ev.preventDefault();
   const email = aEl("aREmail").value.trim(),
-    msg = aEl("aRMsg"),
     btn = aEl("aRSubmit");
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    msg.className = "err";
-    msg.textContent = "請輸入正確的 Email。";
-    return;
-  }
+  if (!EMAIL_RE.test(email)) return setMsg("aRMsg", "請輸入正確的 Email。", "err");
   btn.disabled = true;
-  msg.className = "";
-  msg.textContent = "寄送中…";
+  setMsg("aRMsg", "寄送中…");
   try {
     await llRequestReset(email);
-    msg.className = "ok";
     // 不透露這個 Email 有沒有註冊過
-    msg.textContent = "📧 如果這個 Email 有註冊過,重設密碼的信已經寄出。請到信箱(也看看垃圾郵件)點開連結設定新密碼。";
+    setMsg(
+      "aRMsg",
+      "📧 如果這個 Email 有註冊過,重設密碼的信已經寄出。請到信箱(也看看垃圾郵件)點開連結設定新密碼。",
+      "ok",
+    );
   } catch (e) {
-    msg.className = "err";
-    msg.textContent = llErrorText(e);
+    setMsg("aRMsg", llErrorText(e), "err");
   }
   // 避免連按一直寄信:30 秒後才能再寄
   setTimeout(() => (btn.disabled = !llReady()), 30000);
 };
-aEl("aBack").onclick = () => {
+
+// ── 登出 ──
+aEl("aLogout").onclick = async () => {
+  const btn = aEl("aLogout"),
+    sess = acct && acct.session,
+    email = acct ? acct.email : "";
+  btn.disabled = true;
+  try {
+    if (sess) await llEndSession(sess);
+  } catch (e) {} // 伺服器那邊失敗也照樣登出這台裝置
+  clearLogin();
+  btn.disabled = false;
+  aEl("aLEmail").value = email;
+  aEl("aLPw").value = "";
+  view("aLogin");
+  setMsg("aLMsg", "已經登出。", "ok");
+};
+
+// ── 按鈕 ──
+const backHome = () => {
   acctScr.style.display = "none";
   showHome();
 };
-aEl("aDoneReset").onclick = showReset;
-aEl("aDoneHome").onclick = aEl("aBack").onclick;
-aEl("hAcct").onclick = showAcct;
+aEl("aBack").onclick = backHome;
+aEl("aMeHome").onclick = backHome;
+aEl("aLToSignup").onclick = () => view("aForm");
+aEl("aToLogin").onclick = () => view("aLogin");
+aEl("aLToReset").onclick = showReset;
+aEl("aRToLogin").onclick = () => view(acct ? "aMe" : "aLogin");
+aEl("aMeReset").onclick = showReset;
+aEl("aDoneLogin").onclick = () => view("aLogin");
+aEl("hAcct").onclick = () => showAcct();
 updAcctBtn();
+restoreLogin();

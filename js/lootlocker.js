@@ -55,6 +55,14 @@ const llStartSession = (email, token) =>
   llFetch("game/v2/session/white-label", {
     body: { game_key: LL.gameKey, email, token, game_version: GAME_VERSION },
   });
+// 用之前登入時拿到的「記住我」token 確認登入還有效(重新打開網頁時自動登入)
+const llVerifySession = (email, token) =>
+  llFetch("white-label-login/verify-session", { headers: wlHeaders(), body: { email, token } });
+const llGetName = (sessionToken) =>
+  llFetch("game/player/name", { method: "GET", headers: { "x-session-token": sessionToken } });
+// 登出時結束遊戲 session
+const llEndSession = (sessionToken) =>
+  llFetch("game/v1/session", { method: "DELETE", headers: { "x-session-token": sessionToken } });
 const llSetName = (sessionToken, name) =>
   llFetch("game/player/name", {
     method: "PATCH",
@@ -66,6 +74,9 @@ const llSetName = (sessionToken, name) =>
 function llErrorText(e) {
   const m = String((e && e.message) || "").toLowerCase();
   if (e && e.status === 0) return "連不上伺服器,請檢查網路後再試一次。";
+  if (m.includes("wrong email/password")) return "Email 或密碼錯誤。";
+  if (m.includes("no session found") || m.includes("invalid session"))
+    return "登入已經過期,請重新登入。";
   if (m.includes("platform is not enabled"))
     return "帳號功能還沒開通(LootLocker 後台尚未啟用 White Label Login)。";
   if (m.includes("exist") || m.includes("taken") || (e && e.status === 409))

@@ -1151,3 +1151,61 @@ button:focus-visible {
   margin: 4px 0;
   line-height: 1.6;
 }
+#aReset {
+  display: flex;
+  width: 100%;
+  max-width: 380px;
+  flex-direction: column;
+  gap: 12px;
+}
+#aReset h3 {
+  margin: 0;
+  font-size: 22px;
+  text-align: center;
+}
+#aReset label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-weight: 800;
+}
+#aReset input {
+  font: inherit;
+  font-size: 18px;
+  font-weight: 600;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  user-select: text;
+  -webkit-user-select: text;
+}
+#aReset input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+#aRMsg {
+  min-height: 1.4em;
+  text-align: center;
+  font-weight: 700;
+  line-height: 1.5;
+}
+#aRMsg.err {
+  color: #ffb3b3;
+}
+#aRMsg.ok {
+  color: #4ade80;
+}
+#aRSubmit:disabled {
+  opacity: 0.5;
+}
+button.link {
+  background: none;
+  box-shadow: none;
+  color: #cfd8ff;
+  font-size: 15px;
+  padding: 4px;
+  text-decoration: underline;
+  align-self: center;
+}

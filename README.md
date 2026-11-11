@@ -218,6 +218,13 @@
 2. 呼叫 `white-label-login/sign-up` 建立帳號，LootLocker 會寄出驗證信。
 3. 如果有填名稱，接著依序登入（`white-label-login/login`）、開遊戲 session（`game/v2/session/white-label`），再設定名稱（`PATCH game/player/name`）。如果後台規定 Email 驗證後才能登入，這一步會失敗，但帳號本身已經建立成功，畫面上會說明原因。
 
+### 忘記密碼
+
+建立帳號畫面（以及帳號建立成功的畫面）都有「忘記密碼？」按鈕。輸入 Email 後，遊戲會呼叫 `white-label-login/request-reset-password`，LootLocker 寄出重設密碼的信，使用者點信裡的連結，到 LootLocker 提供的網頁設定新密碼；那個網頁的名稱和 Logo 在 LootLocker 後台的平台設定裡調整。
+
+- 為了不透露某個 Email 有沒有註冊過，畫面一律顯示「如果這個 Email 有註冊過，重設密碼的信已經寄出」。
+- 寄出後 30 秒內不能再按，避免連按一直寄信。
+
 這台裝置只會記住 Email、名稱和玩家 ID（存在 `localStorage` 的 `brawlAccount_<環境>`），**不會**記住密碼。開發環境和正式環境的帳號分開存。
 
 **LootLocker 後台需要先做的設定：** 到後台啟用 **White Label Login** 平台，並設定驗證信的寄件資訊。還沒啟用之前，API 會回傳 `platform is not enabled`，畫面上會顯示「帳號功能還沒開通」。

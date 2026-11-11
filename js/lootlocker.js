@@ -11,14 +11,19 @@ class LLError extends Error {
 }
 async function llFetch(path, { method = "POST", body, headers = {} } = {}) {
   let r;
+  const ac = new AbortController(),
+    timer = setTimeout(() => ac.abort(), 15000); // 15 秒沒回應就當作連線失敗
   try {
     r = await fetch(LL.apiDomain.replace(/\/$/, "") + "/" + path, {
       method,
       headers: { "Content-Type": "application/json", ...headers },
       body: body ? JSON.stringify(body) : undefined,
+      signal: ac.signal,
     });
   } catch (e) {
     throw new LLError(0, "network");
+  } finally {
+    clearTimeout(timer);
   }
   let data = {};
   try {
@@ -36,6 +41,9 @@ const wlHeaders = () => ({
 // 建立帳號(建立後 LootLocker 會寄驗證信)
 const llSignUp = (email, password) =>
   llFetch("white-label-login/sign-up", { headers: wlHeaders(), body: { email, password } });
+// 忘記密碼:LootLocker 會寄出重設密碼的信,使用者在 LootLocker 的網頁設定新密碼(成功回傳 204)
+const llRequestReset = (email) =>
+  llFetch("white-label-login/request-reset-password", { headers: wlHeaders(), body: { email } });
 // 登入,取得 White Label 的 session_token
 const llLogin = (email, password) =>
   llFetch("white-label-login/login", {

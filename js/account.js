@@ -29,6 +29,8 @@ function showAcct() {
   if (acct) return showAcctDone();
   aEl("aForm").style.display = "flex";
   aEl("aDone").style.display = "none";
+  aEl("aReset").style.display = "none";
+  aEl("aTitle").textContent = "建立帳號";
   if (!llReady()) {
     aEl("aMsg").textContent = ENV.name + "還沒設定 LootLocker,暫時不能建立帳號。";
     aEl("aMsg").className = "err";
@@ -37,6 +39,8 @@ function showAcct() {
 }
 function showAcctDone(nameErr) {
   aEl("aForm").style.display = "none";
+  aEl("aReset").style.display = "none";
+  aEl("aTitle").textContent = "我的帳號";
   aEl("aDone").style.display = "flex";
   aEl("aDoneBody").innerHTML =
     "<p>帳號:<b>" +
@@ -110,10 +114,54 @@ aEl("aForget").onclick = () => {
   updAcctBtn();
   showAcct();
 };
+// ── 忘記密碼 ──
+function showReset() {
+  acctScr.style.display = "flex";
+  aEl("aForm").style.display = "none";
+  aEl("aDone").style.display = "none";
+  aEl("aReset").style.display = "flex";
+  aEl("aTitle").textContent = "🔑 忘記密碼";
+  aEl("aREmail").value = aEl("aEmail").value.trim() || (acct ? acct.email : "");
+  aEl("aRMsg").textContent = "";
+  aEl("aRMsg").className = "";
+  aEl("aRSubmit").disabled = !llReady();
+  if (!llReady()) {
+    aEl("aRMsg").textContent = ENV.name + "還沒設定 LootLocker,暫時不能重設密碼。";
+    aEl("aRMsg").className = "err";
+  }
+}
+aEl("aToReset").onclick = showReset;
+aEl("aToForm").onclick = showAcct;
+aEl("aReset").onsubmit = async (ev) => {
+  ev.preventDefault();
+  const email = aEl("aREmail").value.trim(),
+    msg = aEl("aRMsg"),
+    btn = aEl("aRSubmit");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    msg.className = "err";
+    msg.textContent = "請輸入正確的 Email。";
+    return;
+  }
+  btn.disabled = true;
+  msg.className = "";
+  msg.textContent = "寄送中…";
+  try {
+    await llRequestReset(email);
+    msg.className = "ok";
+    // 不透露這個 Email 有沒有註冊過
+    msg.textContent = "📧 如果這個 Email 有註冊過,重設密碼的信已經寄出。請到信箱(也看看垃圾郵件)點開連結設定新密碼。";
+  } catch (e) {
+    msg.className = "err";
+    msg.textContent = llErrorText(e);
+  }
+  // 避免連按一直寄信:30 秒後才能再寄
+  setTimeout(() => (btn.disabled = !llReady()), 30000);
+};
 aEl("aBack").onclick = () => {
   acctScr.style.display = "none";
   showHome();
 };
+aEl("aDoneReset").onclick = showReset;
 aEl("aDoneHome").onclick = aEl("aBack").onclick;
 aEl("hAcct").onclick = showAcct;
 updAcctBtn();

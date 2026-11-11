@@ -15,11 +15,17 @@
     <div id="home">
       <div class="htop">
         <div class="hrow">
-          <span class="pill" id="hTrophy">🏆 0</span
-          ><span class="pill" id="hMoney">💰 $0</span>
+          <span class="pill" id="hMoney">💰 0</span
+          ><span class="pill" id="hEnergy">⚡ 0</span
+          ><span class="pill" id="hTokens">⭐ 0</span>
         </div>
         <h1 id="logo">草叢大亂鬥</h1>
         <div id="tag">⚽ 足球賽 · 7 對 7</div>
+        <div id="hDaily"></div>
+        <div class="hacct">
+          <button id="hAcct" class="ch">👤 建立帳號</button
+          ><span id="envTag"></span>
+        </div>
       </div>
       <div class="hbot">
         <div class="hname">
@@ -74,6 +80,7 @@
       </div>
       <canvas id="dcv" width="300" height="230"></canvas>
       <div id="dtags"></div>
+      <div id="dprog"></div>
       <div id="dstats"></div>
       <div id="dmoves"></div>
       <div class="dbtns">
@@ -83,21 +90,87 @@
         ><button class="arrow" id="dNext" aria-label="下一個角色">›</button>
       </div>
     </div>
-    <div id="ui" style="display: none">
-      <button id="backHome" class="ch">⬅ 返回首頁</button>
-      <button id="uiShop" class="ch">🛒 前往商店</button>
-      <h1>草叢大亂鬥</h1>
-      <p id="msg">
-        7 對 7 足球賽!把球踢進對方球門,先進 3
-        球或時間到比分高者獲勝。碰到球就能帶球,按攻擊鍵把球踢出去!<br />藍隊:磐石、工匠、冰霜、花花、小火、棒棒、疾風;紅隊:鐵壁、毒鴉、月光、仙人掌、雷雷、岩拳、夜影。選角色就是選隊伍和位置。<br />左側搖桿移動,右側搖桿瞄準射擊(右下角金色按鈕放大招,想用再按)。躲進草叢別人看不見你。擊倒對手會掉落綠色強化方塊,撿到血量和傷害
-        +10%。<br />電腦:WASD 移動,滑鼠瞄準/點擊射擊,空白鍵大招,E
-        鍵超能力,Shift/Q 翻滾。手機:大招按鈕左邊的圓形按鈕是超能力。
-      </p>
-      <div id="pick"></div>
-      <p id="desc"></p>
-      <div id="shop"></div>
-      <button id="go">開始戰鬥</button>
+    <!-- 建立帳號 -->
+    <div id="acct" style="display: none">
+      <div class="rtop">
+        <button id="aBack" class="ch">⬅ 返回</button>
+        <h2>建立帳號</h2>
+        <span></span>
+      </div>
+      <form id="aForm" novalidate>
+        <label
+          >Email
+          <input id="aEmail" type="email" autocomplete="email" required
+        /></label>
+        <small class="ahint">小朋友請使用家長的 Email,驗證信會寄到這個信箱。</small>
+        <label
+          >密碼(至少 8 個字元)
+          <input id="aPw" type="password" autocomplete="new-password" minlength="8" required
+        /></label>
+        <label
+          >再輸入一次密碼
+          <input id="aPw2" type="password" autocomplete="new-password" required
+        /></label>
+        <label
+          >使用者名稱(選填,2~16 個字)
+          <input id="aName" type="text" maxlength="16" autocomplete="nickname"
+        /></label>
+        <button id="aSubmit" type="submit">建立帳號</button>
+        <div id="aMsg" role="status" aria-live="polite"></div>
+      </form>
+      <div id="aDone" style="display: none">
+        <h3>✅ 帳號建立成功</h3>
+        <div id="aDoneBody"></div>
+        <button id="aDoneHome">返回首頁</button>
+        <button id="aForget" class="ch">在這台裝置忘記這個帳號</button>
+      </div>
     </div>
+    <!-- 比賽結果:顯示比分與勝場獎勵,接著一定要做數學挑戰 -->
+    <div id="ui" style="display: none">
+      <h1 id="rTitle"></h1>
+      <div id="msg"></div>
+      <button id="go">📝 開始數學挑戰</button>
+    </div>
+    <!-- 2 分鐘數學挑戰 -->
+    <div id="math" style="display: none">
+      <div class="mtop">
+        <div class="mtime"><i id="mBar"></i><b id="mTime">2:00</b></div>
+        <div class="mstat">
+          <span class="pill" id="mRight">✅ 0</span
+          ><span class="pill" id="mCoins">💰 0</span
+          ><span class="pill" id="mStreak">🔥 0</span>
+        </div>
+        <div id="mDbl">🃏 雙倍卡生效中:每題金幣 ×2</div>
+      </div>
+      <div id="mIntro">
+        <h2>📝 2 分鐘數學挑戰</h2>
+        <ul>
+          <li>每答對 1 題得 <b>15~20 金幣</b>(難題 20)</li>
+          <li>連續答對 5 題觸發 <b>⚡能量暴擊</b></li>
+          <li>這次答對 <b>12 題以上</b>得到 <b>⭐星光代幣</b></li>
+          <li>答錯沒關係,會告訴你正確答案</li>
+        </ul>
+        <button id="mStart">準備好了,開始!</button>
+      </div>
+      <div id="mPlay">
+        <div id="mTag"></div>
+        <div id="mQ"></div>
+        <div id="mAns"></div>
+        <div id="mFx"></div>
+        <div id="mPad"></div>
+      </div>
+    </div>
+    <!-- 數學挑戰結算 -->
+    <div id="mres" style="display: none">
+      <h2>⏰ 時間到!</h2>
+      <div id="mrBig"></div>
+      <div id="mrList"></div>
+      <div id="mrCrit"></div>
+      <div id="mrWrong"></div>
+      <button id="mrOk">領取獎勵</button>
+    </div>
+    <script src="js/config.js"></script>
+    <script src="js/lootlocker.js"></script>
     <script src="js/setup.js"></script>
     <script src="js/characters.js"></script>
     <script src="js/state.js"></script>
@@ -108,6 +181,9 @@
     <script src="js/home.js"></script>
     <script src="js/roster.js"></script>
     <script src="js/shop.js"></script>
+    <script src="js/math.js"></script>
+    <script src="js/rewards.js"></script>
+    <script src="js/account.js"></script>
     <script src="js/main.js"></script>
   </body>
 </html>

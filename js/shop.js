@@ -102,13 +102,60 @@ const SHOP = [
     pv: (l) => Math.round(700 * (1 + 0.08 * l)) + " 球速",
   },
 ];
-const CATN = ["🛡 基礎", "⚔️ 戰鬥", "🧠 技能", "⚽ 足球"],
+// 武裝配件(金幣購買)與造型(星光代幣解鎖)也放進商店
+ACCS.forEach((a) =>
+  SHOP.push({ kind: "acc", k: a.k, n: a.n, ic: a.ic, p: a.p, col: a.col, cat: 4, d: a.d }),
+);
+SKINS.forEach((s) =>
+  SHOP.push({
+    kind: "skin",
+    k: s.k,
+    n: s.n + "造型",
+    ic: "🎨",
+    p: UNLOCK_TOKENS,
+    col: s.pal[1],
+    pal: s.pal,
+    cat: 5,
+    d: "把角色換成「" + s.n + "」配色。解鎖後每位英雄都能在角色頁自由套用。",
+  }),
+);
+const CATN = ["🛡 基礎", "⚔️ 戰鬥", "🧠 技能", "⚽ 足球", "🎽 武裝配件", "🎨 造型"],
   MAXL = 10;
+// 屬性升級越升越貴:每升一級價格 +50%
+const upPrice = (it) => Math.round(it.p * (1 + 0.5 * (up[it.k] || 0)));
+// 商品狀態:{ tag: 卡片價格欄文字, can: 能不能按, btn: 詳細頁按鈕文字, cls: 價格欄樣式 }
+function itemState(it) {
+  const c = CH[pick];
+  if (it.kind === "acc") {
+    if (P.accEq === it.k) return { tag: "裝備中", cls: "max", can: true, btn: "卸下" };
+    if (P.acc.includes(it.k)) return { tag: "已擁有", cls: "max", can: true, btn: "裝備" };
+    const ok = money >= it.p;
+    return { tag: "💰" + it.p, cls: ok ? "" : "no", can: ok, btn: "購買 💰" + it.p };
+  }
+  if (it.kind === "skin") {
+    if (P.skins.includes(it.k)) {
+      const on = P.skinEq[pick] === it.k;
+      return {
+        tag: on ? "使用中" : "已解鎖",
+        cls: "max",
+        can: true,
+        btn: on ? "改回原色" : "套用到 " + c.icon + c.name,
+      };
+    }
+    const ok = P.tokens >= it.p;
+    return { tag: "⭐" + it.p, cls: ok ? "" : "no", can: ok, btn: "解鎖 ⭐" + it.p };
+  }
+  const lv = up[it.k] || 0,
+    pr = upPrice(it);
+  if (lv >= MAXL) return { tag: "MAX", cls: "max", can: false, btn: "已滿級" };
+  const ok = money >= pr;
+  return { tag: "💰" + pr, cls: ok ? "" : "no", can: ok, btn: "購買 💰" + pr };
+}
 let sIdx = 0;
 function buildShopScr() {
   const g = $s("sgrid");
   g.innerHTML = "";
-  $s("sMoney").textContent = "💰 $" + money;
+  $s("sMoney").textContent = wallet("ct");
   CATN.forEach((cn, ci) => {
     const h = document.createElement("h3");
     h.textContent = cn;
@@ -119,32 +166,37 @@ function buildShopScr() {
       .filter((i) => SHOP[i].cat === ci)
       .forEach((i) => {
         const it = SHOP[i],
-          lv = up[it.k] || 0,
-          mx = lv >= MAXL,
+          st = itemState(it),
           b = document.createElement("button");
         b.className = "icard";
         b.style.background =
           "linear-gradient(160deg," + it.col + "66,#1d1f6e)";
         const ic = document.createElement("div");
         ic.className = "icon";
-        ic.textContent = it.ic;
+        if (it.pal) {
+          ic.className = "icon swatch";
+          ic.style.background =
+            "radial-gradient(circle at 35% 35%," + it.pal[0] + "," + it.pal[1] + ")";
+        } else ic.textContent = it.ic;
         b.appendChild(ic);
         const n = document.createElement("div");
         n.className = "cn";
         n.textContent = it.n;
         b.appendChild(n);
-        const pp = document.createElement("div");
-        pp.className = "pips";
-        for (let j = 0; j < MAXL; j++) {
-          const q = document.createElement("i");
-          if (j < lv) q.className = "on";
-          pp.appendChild(q);
+        if (!it.kind) {
+          const lv = up[it.k] || 0,
+            pp = document.createElement("div");
+          pp.className = "pips";
+          for (let j = 0; j < MAXL; j++) {
+            const q = document.createElement("i");
+            if (j < lv) q.className = "on";
+            pp.appendChild(q);
+          }
+          b.appendChild(pp);
         }
-        b.appendChild(pp);
         const pr = document.createElement("div");
-        pr.className =
-          "price" + (mx ? " max" : money < it.p ? " no" : "");
-        pr.textContent = mx ? "MAX" : "$" + it.p;
+        pr.className = "price" + (st.cls ? " " + st.cls : "");
+        pr.textContent = st.tag;
         b.appendChild(pr);
         b.onclick = () => openShopItem(i);
         row.appendChild(b);
@@ -154,12 +206,8 @@ function buildShopScr() {
 }
 function showShop() {
   homeOn = true;
-  home.style.display = "none";
-  ui.style.display = "none";
-  roster.style.display = "none";
-  detail.style.display = "none";
+  [home, ui, roster, detail, sdetail].forEach((el) => (el.style.display = "none"));
   detailOn = false;
-  sdetail.style.display = "none";
   shopScr.style.display = "block";
   buildShopScr();
   shopScr.scrollTop = 0;
@@ -167,60 +215,95 @@ function showShop() {
 function openShopItem(i) {
   sIdx = (i + SHOP.length) % SHOP.length;
   const it = SHOP[sIdx],
-    lv = up[it.k] || 0,
-    mx = lv >= MAXL,
+    st = itemState(it),
     c = CH[pick];
   shopScr.style.display = "none";
   sdetail.style.display = "flex";
   sdetail.style.background =
     "linear-gradient(180deg," + it.col + "88,#1b1450 60%)";
-  $s("sdTitle").innerHTML =
-    it.n + "<small>Lv." + lv + " / " + MAXL + "</small>";
-  $s("sdMoney").textContent = "💰 $" + money;
-  $s("sdIcon").textContent = it.ic;
+  $s("sdMoney").textContent = wallet("ct");
+  $s("sdIcon").textContent = it.pal ? "" : it.ic;
   $s("sdDesc").textContent = it.d;
-  $s("sdLv").innerHTML = Array.from(
-    { length: MAXL },
-    (_, j) => '<i class="' + (j < lv ? "on" : "") + '"></i>',
-  ).join("");
-  $s("sdCmp").innerHTML =
-    "<div><small>目前</small><b>" +
-    it.f(lv) +
-    "</b></div><span>➜</span><div><small>" +
-    (mx ? "已滿級" : "下一級") +
-    "</small><b>" +
-    (mx ? "MAX" : it.f(lv + 1)) +
-    "</b></div>";
-  $s("sdPv").innerHTML = it.pv
-    ? "<p>以 " +
-      c.icon +
-      c.name +
-      " 為例:<b>" +
-      it.pv(lv, c) +
-      "</b>" +
-      (mx ? "" : " ➜ <b>" + it.pv(lv + 1, c) + "</b>") +
-      "</p>"
-    : "";
+  if (!it.kind) {
+    const lv = up[it.k] || 0,
+      mx = lv >= MAXL;
+    $s("sdTitle").innerHTML = it.n + "<small>Lv." + lv + " / " + MAXL + "</small>";
+    $s("sdLv").style.display = "";
+    $s("sdLv").innerHTML = Array.from(
+      { length: MAXL },
+      (_, j) => '<i class="' + (j < lv ? "on" : "") + '"></i>',
+    ).join("");
+    $s("sdCmp").style.display = "";
+    $s("sdCmp").innerHTML =
+      "<div><small>目前</small><b>" +
+      it.f(lv) +
+      "</b></div><span>➜</span><div><small>" +
+      (mx ? "已滿級" : "下一級") +
+      "</small><b>" +
+      (mx ? "MAX" : it.f(lv + 1)) +
+      "</b></div>";
+    $s("sdPv").innerHTML = it.pv
+      ? "<p>以 " +
+        c.icon +
+        c.name +
+        " 為例:<b>" +
+        it.pv(lv, c) +
+        "</b>" +
+        (mx ? "" : " ➜ <b>" + it.pv(lv + 1, c) + "</b>") +
+        "</p>"
+      : "";
+  } else {
+    $s("sdTitle").innerHTML =
+      it.n + "<small>" + (it.kind === "acc" ? "武裝配件" : "外觀") + "</small>";
+    $s("sdLv").style.display = "none";
+    $s("sdCmp").style.display = "none";
+    if (it.kind === "acc") {
+      $s("sdPv").innerHTML =
+        "<p>只對你操控的角色有效,一次只能裝備一個配件。</p>";
+    } else {
+      // 用目前出戰的英雄預覽這個造型
+      $s("sdPv").innerHTML = '<canvas width="200" height="170"></canvas>';
+      drawPortrait($s("sdPv").firstChild, c, 0.6, 2.4, true, it.pal);
+    }
+  }
   const bt = $s("sdBuy");
-  bt.disabled = mx || money < it.p;
-  bt.textContent = mx ? "已滿級" : "購買 $" + it.p;
+  bt.disabled = !st.can;
+  bt.textContent = st.btn;
   sdetail.scrollTop = 0;
 }
 $s("sdBuy").onclick = () => {
   const it = SHOP[sIdx];
-  if (money >= it.p && (up[it.k] || 0) < MAXL) {
-    money -= it.p;
+  let done = false;
+  if (it.kind === "acc") {
+    if (P.acc.includes(it.k)) {
+      P.accEq = P.accEq === it.k ? null : it.k;
+      save();
+      done = true;
+    } else done = buyAcc(it.k);
+  } else if (it.kind === "skin") {
+    if (P.skins.includes(it.k)) {
+      if (P.skinEq[pick] === it.k) delete P.skinEq[pick];
+      else P.skinEq[pick] = it.k;
+      save();
+      done = true;
+    } else if (unlockSkin(it.k)) {
+      P.skinEq[pick] = it.k; // 解鎖後直接套用到目前英雄
+      save();
+      done = true;
+    }
+  } else if (money >= upPrice(it) && (up[it.k] || 0) < MAXL) {
+    money -= upPrice(it);
     up[it.k] = (up[it.k] || 0) + 1;
     save();
-    updHome();
-    openShopItem(sIdx);
-    const t = $s("sdIcon");
-    if (t.classList) {
-      t.classList.remove("pop");
-      void t.offsetWidth;
-      t.classList.add("pop");
-    }
+    done = true;
   }
+  if (!done) return;
+  updHome();
+  openShopItem(sIdx);
+  const t = $s("sdIcon");
+  t.classList.remove("pop");
+  void t.offsetWidth;
+  t.classList.add("pop");
 };
 $s("sBack").onclick = showHome;
 $s("sdBack").onclick = () => {
@@ -229,4 +312,3 @@ $s("sdBack").onclick = () => {
 };
 $s("sdPrev").onclick = () => openShopItem(sIdx - 1);
 $s("sdNext").onclick = () => openShopItem(sIdx + 1);
-$s("uiShop").onclick = () => showShop();

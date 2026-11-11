@@ -12,7 +12,7 @@ const ROLEINFO = [
   "連接攻守,負責搶球與傳球",
   "待在前場,負責把球射進對方球門",
 ];
-function drawPortrait(cn, c, t, sc, bg) {
+function drawPortrait(cn, c, t, sc, bg, skin) {
   const x = cn.getContext("2d"),
     old = ctx;
   ctx = x;
@@ -49,6 +49,7 @@ function drawPortrait(cn, c, t, sc, bg) {
       id: 9,
       hp: 1,
       max: 1,
+      skin: skin !== undefined ? skin : skinOf(CH.indexOf(c)),
     };
     x.save();
     x.translate(w / 2, h * 0.58);
@@ -69,7 +70,7 @@ function drawPortrait(cn, c, t, sc, bg) {
 function buildRoster() {
   const g = document.getElementById("rgrid");
   g.innerHTML = "";
-  document.getElementById("rMoney").textContent = "💰 $" + money;
+  document.getElementById("rMoney").textContent = wallet("et");
   [0, 1].forEach((tm) => {
     const h = document.createElement("h3");
     h.textContent = (tm ? "🔴 " : "🔵 ") + TEAMN[tm];
@@ -83,7 +84,8 @@ function buildRoster() {
       .forEach((i) => {
         const c = CH[i],
           b = document.createElement("button");
-        b.className = "card" + (i === pick ? " on" : "");
+        const lk = !isUnlocked(i);
+        b.className = "card" + (i === pick ? " on" : "") + (lk ? " lock" : "");
         b.style.borderColor = TEAMC[tm];
         b.style.background =
           "linear-gradient(160deg," + c.col + "66,#1d1f6e)";
@@ -99,6 +101,10 @@ function buildRoster() {
         const sm = document.createElement("small");
         sm.textContent = ROLES[c.role] + " · " + c.job;
         b.appendChild(sm);
+        const lb = document.createElement("span");
+        lb.className = "lvtag";
+        lb.textContent = lk ? "🔒" : "Lv." + heroLv(i);
+        b.appendChild(lb);
         if (i === pick) {
           const k = document.createElement("span");
           k.className = "cb";
@@ -141,6 +147,7 @@ function openDetail(i) {
     "</span><span>" +
     c.job +
     "</span>";
+  dProg();
   const st = [
     ["血量", c.hp, 230, c.hp],
     ["移動速度", c.sp, 240, c.sp],
@@ -188,6 +195,85 @@ function openDetail(i) {
     .join("");
   detail.scrollTop = 0;
 }
+// 英雄養成區:解鎖 / 升級 / 升級券 / 造型
+function dProg() {
+  const ci = dIdx,
+    el = document.getElementById("dprog"),
+    lk = !isUnlocked(ci),
+    l = heroLv(ci);
+  let h = '<div class="pwal">' + wallet("et") + (P.vouchers ? " · 🎫 " + P.vouchers : "") + "</div>";
+  if (lk) {
+    h +=
+      '<p>這位英雄還沒解鎖。集滿 ⭐' +
+      UNLOCK_TOKENS +
+      ' 枚星光代幣就能解鎖!</p><button class="pbtn" data-a="unlock"' +
+      (P.tokens < UNLOCK_TOKENS ? " disabled" : "") +
+      ">🔓 解鎖(⭐" +
+      UNLOCK_TOKENS +
+      ")</button>";
+  } else {
+    h +=
+      '<div class="plv"><b>Lv.' +
+      l +
+      "</b><small> / " +
+      HERO_MAXLV +
+      "</small><span>血量、傷害各 +" +
+      5 * (l - 1) +
+      "%</span></div>";
+    if (l < HERO_MAXLV)
+      h +=
+        '<div class="prow"><button class="pbtn" data-a="lv"' +
+        (P.energy < lvCost(l) ? " disabled" : "") +
+        ">⬆ 升級(⚡" +
+        lvCost(l) +
+        ")</button>" +
+        (P.vouchers
+          ? '<button class="pbtn alt" data-a="voucher">🎫 用升級券</button>'
+          : "") +
+        "</div>";
+    else h += "<p>🏅 已經升到最高等級!</p>";
+    const own = SKINS.filter((s) => P.skins.includes(s.k));
+    h +=
+      '<div class="pskin"><span>🎨 造型</span>' +
+      [{ k: "", n: "原色" }]
+        .concat(own)
+        .map(
+          (s) =>
+            '<button data-skin="' +
+            s.k +
+            '" class="' +
+            ((P.skinEq[ci] || "") === s.k ? "on" : "") +
+            '">' +
+            s.n +
+            "</button>",
+        )
+        .join("") +
+      (own.length ? "" : "<small>到商店用 ⭐ 解鎖造型</small>") +
+      "</div>";
+  }
+  el.innerHTML = h;
+  el.querySelectorAll("[data-a]").forEach(
+    (b) =>
+      (b.onclick = () => {
+        const a = b.dataset.a;
+        if (a === "unlock") unlockHero(ci);
+        if (a === "lv") levelUpHero(ci, false);
+        if (a === "voucher") levelUpHero(ci, true);
+        openDetail(ci);
+      }),
+  );
+  el.querySelectorAll("[data-skin]").forEach(
+    (b) =>
+      (b.onclick = () => {
+        if (b.dataset.skin) P.skinEq[ci] = b.dataset.skin;
+        else delete P.skinEq[ci];
+        save();
+        dProg();
+      }),
+  );
+  document.getElementById("dPick").disabled = lk;
+  document.getElementById("dPlay").disabled = lk;
+}
 function drawDetail(ts) {
   drawPortrait(dcv, CH[dIdx], ts / 1000, 3.3, true);
 }
@@ -200,16 +286,13 @@ document.getElementById("dBack").onclick = () => {
 document.getElementById("dPrev").onclick = () => openDetail(dIdx - 1);
 document.getElementById("dNext").onclick = () => openDetail(dIdx + 1);
 document.getElementById("dPick").onclick = () => {
+  if (!isUnlocked(dIdx)) return;
   pick = dIdx;
-  buildPick();
+  save();
   showHome();
 };
 document.getElementById("dPlay").onclick = () => {
+  if (!isUnlocked(dIdx)) return;
   pick = dIdx;
-  buildPick();
-  detail.style.display = "none";
-  detailOn = false;
-  roster.style.display = "none";
-  leaveHome();
-  document.getElementById("go").onclick();
+  startMatch();
 };

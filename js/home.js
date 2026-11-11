@@ -1,112 +1,40 @@
-// 開戰選角、首頁
-const pk = document.getElementById("pick");
-function buildPick() {
-  pk.innerHTML = "";
-  CH.forEach((c, i) => {
-    const b = document.createElement("button");
-    b.className = "ch" + (i === pick ? " on" : "");
-    b.innerHTML =
-      c.icon +
-      " " +
-      c.name +
-      "<small>" +
-      (c.team ? "紅隊" : "藍隊") +
-      "·" +
-      ROLES[c.role] +
-      "</small>";
-    b.onclick = () => {
-      pick = i;
-      buildPick();
-    };
-    pk.appendChild(b);
-  });
-  document.getElementById("desc").textContent =
-    (CH[pick].team ? "紅隊" : "藍隊") +
-    "·" +
-    ROLES[CH[pick].role] +
-    "(" +
-    CH[pick].job +
-    ")\n" +
-    CH[pick].d +
-    "\n超能力「" +
-    CH[pick].aname +
-    "」:" +
-    CH[pick].ad +
-    "\n星之力「" +
-    CH[pick].star +
-    "」:" +
-    CH[pick].sd +
-    "\n翻滾:短暫無敵的閃避";
-}
-buildPick();
-function buildShop() {
-  const el = document.getElementById("shop");
-  el.innerHTML = "";
-  const h = document.createElement("div");
-  h.id = "money";
-  h.textContent = "💰 $" + money;
-  updHome();
-  el.appendChild(h);
-  [
-    ["hp", "血量變高", 100, "+10% 血量"],
-    ["resp", "重生加速", 100, "重生時間 -15%"],
-    ["spd", "移動加速", 120, "+5% 移速"],
-    ["roll", "翻滾冷卻", 150, "冷卻 -8%"],
-    ["kick", "射門力量", 180, "+8% 踢球力道"],
-    ["rate", "射速變快", 200, "+8% 射速"],
-    ["cdr", "超能力冷卻", 200, "冷卻 -6%"],
-    ["chg", "大招充能", 250, "+15% 充能速度"],
-    ["atk", "攻擊力變強", 300, "+10% 傷害"],
-  ].forEach(([k, n, c, d]) => {
-    const b = document.createElement("button");
-    b.className = "ch";
-    b.disabled = money < c || up[k] >= 10;
-    b.style.opacity = b.disabled ? 0.5 : 1;
-    b.innerHTML =
-      n + " Lv." + up[k] + "<small>$" + c + " · " + d + "</small>";
-    b.onclick = () => {
-      if (money >= c && up[k] < 10) {
-        money -= c;
-        up[k]++;
-        save();
-        buildShop();
-      }
-    };
-    el.appendChild(b);
-  });
-}
-buildShop();
-document.getElementById("go").onclick = () => {
-  reset();
-  ui.style.display = "none";
-  mouse.down = false;
-};
+// 首頁:錢包、今日勝場、切換英雄、出擊
 const home = document.getElementById("home");
+// 錢包文字,ks 例如 "cet" = 金幣、能量、代幣
+function wallet(ks) {
+  const m = { c: "💰 " + money, e: "⚡ " + P.energy, t: "⭐ " + P.tokens };
+  return ks
+    .split("")
+    .map((k) => m[k])
+    .join(" · ");
+}
 function updHome() {
-  const t = document.getElementById("hTrophy");
-  if (!t) return;
   const c = CH[pick];
-  t.textContent = "🏆 " + trophy;
-  document.getElementById("hMoney").textContent = "💰 $" + money;
+  document.getElementById("hMoney").textContent = "💰 " + money;
+  document.getElementById("hEnergy").textContent = "⚡ " + P.energy;
+  document.getElementById("hTokens").textContent = "⭐ " + P.tokens;
+  document.getElementById("hDaily").innerHTML = dailyHTML();
   document.getElementById("hName").innerHTML =
     c.icon +
     " " +
     c.name +
-    "<small>" +
+    " <span class=\"lvb\">Lv." +
+    heroLv(pick) +
+    "</span><small>" +
     (c.team ? "紅隊" : "藍隊") +
     " · " +
     ROLES[c.role] +
     " · " +
     c.job +
     "</small>";
+  const pl = document.getElementById("play");
+  pl.textContent = P.mathPending ? "📝 先做數學" : "出擊!";
 }
 function showHome() {
   homeOn = true;
-  ui.style.display = "none";
-  shopScr.style.display = "none";
-  sdetail.style.display = "none";
-  roster.style.display = "none";
-  detail.style.display = "none";
+  [ui, shopScr, sdetail, roster, detail, mathScr, mresScr, acctScr].forEach(
+    (el) => (el.style.display = "none"),
+  );
   detailOn = false;
   home.style.display = "flex";
   updHome();
@@ -115,23 +43,29 @@ function leaveHome() {
   homeOn = false;
   home.style.display = "none";
 }
-document.getElementById("play").onclick = () => {
+// 開始比賽;還沒做完上一場的數學挑戰就先去做
+function startMatch() {
+  if (P.mathPending) return startMath();
+  if (!isUnlocked(pick)) return;
+  save();
+  [ui, shopScr, sdetail, roster, detail].forEach((el) => (el.style.display = "none"));
+  detailOn = false;
   leaveHome();
-  document.getElementById("go").onclick();
-};
+  reset();
+  mouse.down = false;
+}
+document.getElementById("play").onclick = startMatch;
 document.getElementById("hChars").onclick = () => showRoster();
 document.getElementById("hShop").onclick = () => showShop();
-document.getElementById("backHome").onclick = showHome;
-document.getElementById("hPrev").onclick = () => {
-  pick = (pick + CH.length - 1) % CH.length;
+// 首頁左右切換只在已解鎖的英雄之間
+function stepPick(d) {
+  const L = CH.map((c, i) => i).filter(isUnlocked);
+  pick = L[(L.indexOf(pick) + d + L.length) % L.length];
+  save();
   updHome();
-  buildPick();
-};
-document.getElementById("hNext").onclick = () => {
-  pick = (pick + 1) % CH.length;
-  updHome();
-  buildPick();
-};
+}
+document.getElementById("hPrev").onclick = () => stepPick(-1);
+document.getElementById("hNext").onclick = () => stepPick(1);
 function drawHome(ts) {
   const t = ts / 1000,
     c = CH[pick];
@@ -184,6 +118,7 @@ function drawHome(ts) {
     id: 9,
     hp: 1,
     max: 1,
+    skin: skinOf(pick),
   };
   ctx.save();
   ctx.translate(vw / 2, cy + Math.sin(t * 3) * 5);

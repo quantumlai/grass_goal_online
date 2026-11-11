@@ -627,7 +627,8 @@ function drawChar(e) {
     ctx.arc(x, y, r + 8, 0, 6.283);
     ctx.fill();
   }
-  const P = {
+  // 造型(e.skin)會蓋掉角色原本的配色
+  const P = e.skin || {
     gun: ["#9af0ff", "#2a9fd6"],
     tank: ["#ff9a8b", "#d63d3d"],
     snipe: ["#c9f27a", "#4f9d3a"],

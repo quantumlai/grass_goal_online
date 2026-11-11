@@ -8,7 +8,7 @@ function B(e, a, o) {
     b.d *= 1.15;
     b.sp *= 1.25;
   }
-  b.d *= 1 + 0.1 * (e.cubes || 0) + (e.id === 0 ? 0.1 * up.atk : 0);
+  b.d *= 1 + 0.1 * (e.cubes || 0) + (e.id === 0 ? myAtkAdd() : 0);
   G.bul.push(b);
 }
 function shoot(e, ang, sup) {
@@ -476,7 +476,7 @@ function kickBall(e, ang) {
     return false;
   const ks =
     (e.kickBoost > 0 ? 1000 : 700) *
-    (e.id === 0 ? 1 + 0.08 * up.kick : 1) *
+    (e.id === 0 ? myKickMul() : 1) *
     (e.c.k === "bat" ? 1.25 : 1);
   bl.vx = Math.cos(ang) * ks;
   bl.vy = Math.sin(ang) * ks;
@@ -528,6 +528,7 @@ function hurt(e, d, by) {
   if (e.c.k === "wall") d *= 0.9;
   if (e.shield > 0) d *= 0.25;
   if (e.dash > 0) d *= 0.5;
+  if (e.id === 0) d *= myDefMul();
   e.hp -= d;
   e.hitT = 0.15;
   if (e.hp <= 0) {
@@ -537,7 +538,7 @@ function hurt(e, d, by) {
     dropGem(e.x, e.y, n + 0);
     G.gems.push({ x: e.x, y: e.y - 8, vx: 0, vy: -60, age: 0, cube: 1 });
     e.cubes = 0;
-    e.max = e.c.hp * (e.id === 0 ? 1 + 0.1 * up.hp : 1);
+    e.max = e.c.hp * (e.id === 0 ? myHpMul() : 1);
     G.parts.push({ x: e.x, y: e.y, t: 0.5, boom: 1 });
     if (e.id === 0) G.shake = 0.3;
   }

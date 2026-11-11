@@ -1,6 +1,5 @@
-// 存檔、升級、隊伍與單位建立、重置比賽
-let trophy = 0,
-  money = 0,
+// 存檔、玩家進度(金幣/能量/代幣/英雄/配件/造型)、加成、隊伍與單位建立、重置比賽
+let money = 0, // 金幣
   homeOn = true;
 const up = {
   hp: 0,
@@ -13,21 +12,72 @@ const up = {
   resp: 0,
   kick: 0,
 };
+// 一開始就能用的英雄:雷雷、磐石、月光、疾風
+const START_HEROES = [0, 1, 4, 5];
+const HERO_MAXLV = 10,
+  UNLOCK_TOKENS = 3; // 解鎖一位英雄或一個造型需要的星光代幣
+const lvCost = (l) => 50 + 50 * l; // 從 Lv.l 升到 Lv.l+1 需要的戰力能量
+// 武裝配件:一次只能裝備一個,只對你操控的角色有效
+const ACCS = [
+  { k: "helm", n: "鋼鐵頭盔", ic: "🪖", p: 1000, v: 0.12, col: "#94a3b8", d: "受到的傷害 -12%" },
+  { k: "glove", n: "烈焰手套", ic: "🧤", p: 1000, v: 0.12, col: "#ff6b3d", d: "攻擊傷害 +12%" },
+  { k: "shoe", n: "疾風跑鞋", ic: "👟", p: 1000, v: 0.1, col: "#4cc9f0", d: "移動速度 +10%" },
+  { k: "core", n: "能量核心", ic: "🔋", p: 1000, v: 0.3, col: "#ffd23f", d: "大招充能速度 +30%" },
+  { k: "boot", n: "黃金球鞋", ic: "🥇", p: 1000, v: 0.25, col: "#f5c542", d: "踢球力道 +25%" },
+  { k: "charm", n: "再生護符", ic: "💚", p: 1000, v: 1, col: "#4ade80", d: "脫離戰鬥 2 秒就開始回血,每秒回 40 血" },
+];
+// 造型:換掉角色的主色(亮色、暗色),用星光代幣解鎖,每位英雄可以各自套用
+const SKINS = [
+  { k: "gold", n: "黃金", pal: ["#fff2a8", "#d4a017"] },
+  { k: "shadow", n: "暗影", pal: ["#a99bff", "#2b2160"] },
+  { k: "lava", n: "熔岩", pal: ["#ffb36b", "#c2261b"] },
+  { k: "ice", n: "冰晶", pal: ["#e6fbff", "#5fc8f0"] },
+  { k: "candy", n: "糖果", pal: ["#ffd1f0", "#b84fd6"] },
+  { k: "jungle", n: "叢林", pal: ["#d7ff9a", "#2f8f3a"] },
+];
+const P = {
+  energy: 0, // 戰力能量
+  tokens: 0, // 星光代幣
+  vouchers: 0, // 升級券(當日 5 勝獎勵,可免費升一級)
+  lv: {}, // 英雄等級 {角色索引: 等級},沒有記錄就是 Lv.1
+  unlocked: START_HEROES.slice(),
+  acc: [], // 已購買的配件
+  accEq: null, // 裝備中的配件
+  skins: [], // 已解鎖的造型
+  skinEq: {}, // {角色索引: 造型 k}
+  mathPending: false, // 打完比賽還沒做數學挑戰
+  dbl: false, // 下一場數學挑戰金幣 ×2
+  daily: { date: "", wins: 0, m3: false, m5: false },
+  pick: 0,
+};
 try {
   const sv = JSON.parse(localStorage.getItem("brawlSave") || "{}");
   money = sv.money || 0;
-  trophy = sv.trophy || 0;
   Object.assign(up, sv.up || {});
+  if (sv.P) Object.assign(P, sv.P);
 } catch (err) {}
 function save() {
+  P.pick = pick;
   try {
-    localStorage.setItem(
-      "brawlSave",
-      JSON.stringify({ money, up, trophy }),
-    );
+    localStorage.setItem("brawlSave", JSON.stringify({ v: 2, money, up, P }));
   } catch (err) {}
 }
-let pick = 0;
+const heroLv = (ci) => P.lv[ci] || 1;
+const isUnlocked = (ci) => P.unlocked.includes(ci);
+const skinOf = (ci) => {
+  const s = SKINS.find((s) => s.k === P.skinEq[ci]);
+  return s ? s.pal : null;
+};
+const accVal = (k) => (P.accEq === k ? ACCS.find((a) => a.k === k).v : 0);
+// 你操控角色的加成:商店升級 × 英雄等級 × 配件
+const myHpMul = () => (1 + 0.1 * up.hp) * (1 + 0.05 * (heroLv(pick) - 1));
+const myAtkAdd = () =>
+  0.1 * up.atk + 0.05 * (heroLv(pick) - 1) + accVal("glove");
+const myDefMul = () => 1 - accVal("helm");
+const mySpdMul = () => (1 + 0.05 * up.spd) * (1 + accVal("shoe"));
+const myChgMul = () => (1 + 0.15 * up.chg) * (1 + accVal("core"));
+const myKickMul = () => (1 + 0.08 * up.kick) * (1 + accVal("boot"));
+let pick = isUnlocked(P.pick) ? P.pick : P.unlocked[0];
 const RL = ["守", "後", "中", "前"],
   ROLES = ["守門員", "後衛", "中場", "前鋒"];
 const nm = (e) =>
@@ -43,8 +93,9 @@ function mk(i, x, y, ci, tm, role) {
     x,
     y,
     r: c.k === "tank" || c.k === "wall" || c.k === "brute" ? 21 : 16,
-    hp: c.hp * (i === 0 ? 1 + 0.1 * up.hp : 1),
-    max: c.hp * (i === 0 ? 1 + 0.1 * up.hp : 1),
+    hp: c.hp * (i === 0 ? myHpMul() : 1),
+    max: c.hp * (i === 0 ? myHpMul() : 1),
+    skin: i === 0 ? skinOf(ci) : null,
     ang: 0,
     cd: 0,
     sup: 0,

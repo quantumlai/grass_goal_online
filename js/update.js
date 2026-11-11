@@ -111,7 +111,7 @@ function update(dt) {
       dt,
       p.c.sp *
         (p.haste > 0 ? 1.5 : 1) *
-        (1 + 0.05 * up.spd) *
+        mySpdMul() *
         (p.slow > 0 ? 0.5 : 1),
     );
     let aiming = false,
@@ -152,7 +152,7 @@ function update(dt) {
             );
       shoot(p, p.ang, 0);
       p.cd = p.c.cd * (p.rapid > 0 ? 0.35 : 1) * Math.pow(0.92, up.rate);
-      p.sup = Math.min(100, p.sup + 8 * (1 + 0.15 * up.chg));
+      p.sup = Math.min(100, p.sup + 8 * myChgMul());
     }
     if (superReq && p.sup >= 100) {
       const nt = G.ents
@@ -404,7 +404,7 @@ function update(dt) {
         if (o && !b.sup)
           o.sup = Math.min(
             100,
-            o.sup + 10 * (o.id === 0 ? 1 + 0.15 * up.chg : 1),
+            o.sup + 10 * (o.id === 0 ? myChgMul() : 1),
           );
         G.parts.push({ x: b.x, y: b.y, t: 0.25, txt: b.d, hit: 1 });
       }
@@ -526,8 +526,9 @@ function update(dt) {
   for (const e of G.ents) {
     if (!e.dead && e.hp < e.max) {
       e.regen = (e.regen || 0) + dt;
-      if (e.hitT <= 0 && e.regen > 4)
-        e.hp = Math.min(e.max, e.hp + 25 * dt);
+      const charm = e.id === 0 && accVal("charm");
+      if (e.hitT <= 0 && e.regen > (charm ? 2 : 4))
+        e.hp = Math.min(e.max, e.hp + (charm ? 40 : 25) * dt);
     }
     if (e.hitT > 0) e.regen = 0;
   }
@@ -586,37 +587,11 @@ function update(dt) {
       bl.y = Math.max(bl.r, Math.min(H - bl.r, bl.y));
     }
   }
-  // 結束
+  // 結束:結算交給 rewards.js(比賽獎勵 → 數學挑戰)
   if (G.t <= 0 || G.score[0] >= 3 || G.score[1] >= 3) {
     G.over = true;
-
     const sm = G.score[G.ents[0].tm],
-      so = G.score[1 - G.ents[0].tm],
-      pr = sm > so ? 1 : sm === so ? 0 : 2;
-    msg.innerHTML =
-      (pr === 1 ? "🏆 你贏了!" : pr ? "你們輸了" : "平手") +
-      "<br>藍隊 " +
-      G.score[0] +
-      " : " +
-      G.score[1] +
-      " 紅隊";
-    if (pr === 1) {
-      money += 150;
-      trophy += 8;
-      save();
-      msg.innerHTML += "<br>💰 獲得 $150 · 🏆 +8";
-    } else if (pr === 2) {
-      money += 50;
-      trophy = Math.max(0, trophy - 3);
-      save();
-      msg.innerHTML += "<br>💰 獲得 $50 · 🏆 -3";
-    } else {
-      money += 100;
-      save();
-      msg.innerHTML += "<br>💰 獲得 $100";
-    }
-    buildShop();
-    document.getElementById("go").textContent = "再來一場";
-    ui.style.display = "flex";
+      so = G.score[1 - G.ents[0].tm];
+    onMatchEnd(sm > so ? "win" : sm === so ? "tie" : "lose");
   }
 }

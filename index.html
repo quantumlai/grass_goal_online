@@ -1,0 +1,113 @@
+<!doctype html>
+
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+    />
+    <title>草叢大亂鬥</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <canvas id="c"></canvas>
+    <div id="home">
+      <div class="htop">
+        <div class="hrow">
+          <span class="pill" id="hTrophy">🏆 0</span
+          ><span class="pill" id="hMoney">💰 $0</span>
+        </div>
+        <h1 id="logo">草叢大亂鬥</h1>
+        <div id="tag">⚽ 足球賽 · 7 對 7</div>
+      </div>
+      <div class="hbot">
+        <div class="hname">
+          <button class="arrow" id="hPrev" aria-label="上一個角色">‹</button>
+          <div id="hName"></div>
+          <button class="arrow" id="hNext" aria-label="下一個角色">›</button>
+        </div>
+        <div class="hbtns">
+          <button class="sbtn" id="hShop">🛒<small>商店</small></button
+          ><button id="play">出擊!</button
+          ><button class="sbtn" id="hChars">👤<small>角色</small></button>
+        </div>
+      </div>
+    </div>
+    <div id="shopscr" style="display: none">
+      <div class="rtop">
+        <button id="sBack" class="ch">⬅ 返回</button>
+        <h2>商店</h2>
+        <span class="pill" id="sMoney">💰 $0</span>
+      </div>
+      <div id="sgrid"></div>
+    </div>
+    <div id="sdetail" style="display: none">
+      <div class="dtop">
+        <button id="sdBack" class="ch">⬅ 返回</button>
+        <div id="sdTitle"></div>
+        <span class="pill" id="sdMoney">💰 $0</span>
+      </div>
+      <div id="sdIcon" class="bigicon"></div>
+      <div id="sdDesc"></div>
+      <div id="sdLv" class="lv"></div>
+      <div id="sdCmp" class="cmp"></div>
+      <div id="sdPv"></div>
+      <div class="dbtns">
+        <button class="arrow" id="sdPrev" aria-label="上一個商品">‹</button
+        ><button id="sdBuy" class="buy"></button
+        ><button class="arrow" id="sdNext" aria-label="下一個商品">›</button>
+      </div>
+    </div>
+    <div id="roster" style="display: none">
+      <div class="rtop">
+        <button id="rBack" class="ch">⬅ 返回</button>
+        <h2>角色</h2>
+        <span class="pill" id="rMoney">💰 $0</span>
+      </div>
+      <div id="rgrid"></div>
+    </div>
+    <div id="detail" style="display: none">
+      <div class="dtop">
+        <button id="dBack" class="ch">⬅ 返回</button>
+        <div id="dTitle"></div>
+      </div>
+      <canvas id="dcv" width="300" height="230"></canvas>
+      <div id="dtags"></div>
+      <div id="dstats"></div>
+      <div id="dmoves"></div>
+      <div class="dbtns">
+        <button class="arrow" id="dPrev" aria-label="上一個角色">‹</button
+        ><button id="dPick" class="sbtn2">選擇出戰</button
+        ><button id="dPlay" class="play2">出擊!</button
+        ><button class="arrow" id="dNext" aria-label="下一個角色">›</button>
+      </div>
+    </div>
+    <div id="ui" style="display: none">
+      <button id="backHome" class="ch">⬅ 返回首頁</button>
+      <button id="uiShop" class="ch">🛒 前往商店</button>
+      <h1>草叢大亂鬥</h1>
+      <p id="msg">
+        7 對 7 足球賽!把球踢進對方球門,先進 3
+        球或時間到比分高者獲勝。碰到球就能帶球,按攻擊鍵把球踢出去!<br />藍隊:磐石、工匠、冰霜、花花、小火、棒棒、疾風;紅隊:鐵壁、毒鴉、月光、仙人掌、雷雷、岩拳、夜影。選角色就是選隊伍和位置。<br />左側搖桿移動,右側搖桿瞄準射擊(右下角金色按鈕放大招,想用再按)。躲進草叢別人看不見你。擊倒對手會掉落綠色強化方塊,撿到血量和傷害
+        +10%。<br />電腦:WASD 移動,滑鼠瞄準/點擊射擊,空白鍵大招,E
+        鍵超能力,Shift/Q 翻滾。手機:大招按鈕左邊的圓形按鈕是超能力。
+      </p>
+      <div id="pick"></div>
+      <p id="desc"></p>
+      <div id="shop"></div>
+      <button id="go">開始戰鬥</button>
+    </div>
+    <script src="js/setup.js"></script>
+    <script src="js/characters.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/input.js"></script>
+    <script src="js/combat.js"></script>
+    <script src="js/update.js"></script>
+    <script src="js/render.js"></script>
+    <script src="js/home.js"></script>
+    <script src="js/roster.js"></script>
+    <script src="js/shop.js"></script>
+    <script src="js/main.js"></script>
+  </body>
+</html>

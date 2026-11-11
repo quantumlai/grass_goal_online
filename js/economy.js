@@ -163,11 +163,28 @@ async function econSync() {
   econUI();
   try {
     const list = (await withSession((s) => llCurrencies(s))).currencies || [];
-    const find = (code) => list.find((c) => c.code === code);
+    // 代碼比對不分大小寫、忽略前後空白
+    const norm = (c) => String(c || "").trim().toUpperCase();
+    const find = (code) => list.find((c) => norm(c.code) === norm(code));
     const cc = find(ECON.coins),
       ce = find(ECON.energy);
-    if (!cc || !ce)
-      throw new Error("LootLocker 找不到貨幣 " + (!cc ? ECON.coins : ECON.energy));
+    if (!cc || !ce) {
+      const missing = [!cc && ECON.coins, !ce && ECON.energy].filter(Boolean).join("、");
+      const got = list.map((c) => c.code + (c.published === false ? "(未發佈)" : "")).join("、");
+      console.warn("LootLocker 回傳的貨幣:", list);
+      throw new LLError(
+        -1,
+        "LootLocker 找不到貨幣 " +
+          missing +
+          "。目前" +
+          ENV.name +
+          "讀到的貨幣:" +
+          (got || "沒有任何貨幣") +
+          "。請到 LootLocker 後台確認貨幣已發佈(Publish),而且建立在 game key(" +
+          LL.gameKey.split("_")[0] +
+          "_ 開頭)對應的環境。",
+      );
+    }
     econCur = { coins: cc.id, energy: ce.id };
     const noWrite = [cc, ce].filter((c) => c.game_api_writes_enabled === false).map((c) => c.code);
     if (noWrite.length) econ.warn = "貨幣 " + noWrite.join("、") + " 還沒開啟 Game API 寫入,金幣能量無法存進帳號。";
@@ -195,7 +212,8 @@ async function econSync() {
     econ.state = "ok";
   } catch (e) {
     econ.state = "err";
-    econ.warn = e.status === 0 ? "連不上伺服器,稍後會自動再同步。" : llErrorText(e);
+    econ.warn =
+      e.status === 0 ? "連不上伺服器,稍後會自動再同步。" : e.status === -1 ? e.message : llErrorText(e);
     if (e.status === 0) {
       clearTimeout(econRetry);
       econRetry = setTimeout(() => acct && econSync(), 30000);

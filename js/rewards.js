@@ -30,7 +30,8 @@ function onMatchEnd(res) {
   const r = res === "win" ? WIN_ENERGY : res === "tie" ? TIE_ENERGY : LOSE_ENERGY,
     en = rnd(r[0], r[1]),
     notes = [];
-  P.energy += en;
+  addEnergy(en);
+  lbAdd(LB.wins, res === "win" ? 1 : 0, 1); // 勝場數 +1(只有贏才加)、出賽數 +1
   if (res === "win") {
     P.daily.wins++;
     P.dbl = true;
@@ -81,8 +82,7 @@ function levelUpHero(ci, useVoucher) {
     if (P.vouchers < 1) return false;
     P.vouchers--;
   } else {
-    if (P.energy < lvCost(l)) return false;
-    P.energy -= lvCost(l);
+    if (!spendEnergy(lvCost(l))) return false;
   }
   P.lv[ci] = l + 1;
   save();
@@ -97,8 +97,7 @@ function unlockSkin(k) {
 }
 function buyAcc(k) {
   const a = ACCS.find((a) => a.k === k);
-  if (P.acc.includes(k) || money < a.p) return false;
-  money -= a.p;
+  if (P.acc.includes(k) || !spendCoins(a.p)) return false;
   P.acc.push(k);
   P.accEq = k;
   save();

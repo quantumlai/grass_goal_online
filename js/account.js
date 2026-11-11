@@ -66,6 +66,8 @@ function updAcctBtn() {
 function renderMe() {
   aEl("aMeName").textContent = acct.name || "(還沒設定名稱)";
   aEl("aMeEmail").textContent = acct.email;
+  aEl("aMeWallet").textContent = wallet("ce");
+  econUI();
 }
 
 // ── 登入狀態 ──
@@ -89,22 +91,28 @@ async function finishLogin(email, wlToken) {
       name = (await llGetName(s.session_token)).name || "";
     } catch (e) {}
   }
+  const same = acct && acct.email === email;
   acct = {
     email,
     name,
     playerId: s.player_id,
+    playerUlid: s.player_ulid,
     publicUid: s.public_uid,
+    walletId: s.wallet_id || (same ? acct.walletId : undefined),
+    bal: same ? acct.bal : undefined,
     wlToken,
     session: s.session_token,
   };
   store.set(ACCT_KEY, acct);
   updAcctBtn();
+  econSync(); // 背景同步金幣、能量、排行榜,不擋住登入畫面
 }
 async function doLogin(email, pw) {
   const l = await llLogin(email, pw);
   await finishLogin(email, l.session_token);
 }
 function clearLogin() {
+  econLogout();
   acct = null;
   store.set(ACCT_KEY, null);
   updAcctBtn();
@@ -248,5 +256,6 @@ aEl("aRToLogin").onclick = () => view(acct ? "aMe" : "aLogin");
 aEl("aMeReset").onclick = showReset;
 aEl("aDoneLogin").onclick = () => view("aLogin");
 aEl("hAcct").onclick = () => showAcct();
+if (acct) econUseCached(); // 先用上次的餘額顯示,自動登入後再同步
 updAcctBtn();
 restoreLogin();

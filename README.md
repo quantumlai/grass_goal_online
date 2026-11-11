@@ -261,11 +261,46 @@ js/
   shop.js         商店(屬性升級、武裝配件、造型)
   math.js         數學題庫與 2 分鐘數學挑戰
   rewards.js      比賽結算、每日勝場、英雄解鎖與升級
+  economy.js      金幣、能量與 LootLocker 錢包同步，排行榜上傳
   account.js      帳號頁（登入、建立帳號、忘記密碼、登出）
   main.js         主迴圈與啟動
 ```
 
 JS 檔案共用全域變數，`index.html` 裡 `<script>` 的載入順序不能更動。
+
+### 經濟系統與排行榜（LootLocker）
+
+設定在 [js/config.js](js/config.js) 的 `LL_ECONOMY`，同步邏輯在 [js/economy.js](js/economy.js)。
+
+| LootLocker | 用途 |
+| --- | --- |
+| 貨幣 `CIN` | 💰 金幣 |
+| 貨幣 `PPT` | ⚡ 戰力能量 |
+| 排行榜 `grass_goal_online_math` | 分數 = 累計**答對題數**；metadata = 累計**答題數**（數字字串） |
+| 排行榜 `grass_goal_online_wins` | 分數 = 累計**勝場數**；metadata = 累計**出賽數**（數字字串，輸、平手也算） |
+
+**沒登入時：** 金幣和能量只存在這台裝置，排行榜不記錄。
+
+**登入時：** 把裝置上累積的金幣和能量轉進帳號錢包，之後畫面上顯示的都是帳號錢包的餘額。每次登入都會轉，所以沒登入時賺的不會不見；登出後，裝置上的金幣和能量是 0，從頭累積。
+
+**交易方式：** 賺錢（credit）、花錢（debit）、排行榜更新都先放進佇列（存在 `localStorage`），依序送給 LootLocker：
+
+- 連不上網路就留在佇列裡，30 秒後或下次登入時補送。
+- 伺服器拒絕的交易（例如餘額不足）會丟掉，並以伺服器的餘額為準。
+- 排行榜沒有「累加 metadata」的 API，所以每次都是先讀取目前的分數和 metadata，加上這次的數字再送出。
+- 遊戲 session 過期時，會用「記住我」的 token 自動重開。
+
+「我的帳號」畫面會顯示同步狀態，例如「☁️ 已同步」、「還有 N 筆資料等待上傳」，或錯誤訊息。
+
+**LootLocker 後台需要的設定：**
+
+| 項目 | 設定 |
+| --- | --- |
+| 貨幣 CIN、PPT | 開啟 **Game API writes**（沒開的話「我的帳號」會顯示警告，金幣能量存不進帳號） |
+| 兩個排行榜 | 類型設為 **Player**（member_id 用玩家 ID）、開啟 **Game API writes**、開啟 **Metadata** |
+| 兩個排行榜 | 開啟 **Overwrite score on submit**：輸球時勝場數不變但出賽數會增加，沒開的話 LootLocker 可能只保留最高分那筆，metadata 不會更新 |
+
+**注意：** 這些寫入都是從玩家的瀏覽器直接送出的，懂技術的人可以自己呼叫 API 改金幣或分數。LootLocker 建議重要的寫入改由後端伺服器處理；目前這個專案是純靜態網頁，沒有後端。
 
 ### 存檔
 

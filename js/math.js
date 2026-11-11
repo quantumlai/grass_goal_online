@@ -378,6 +378,7 @@ function mFinish() {
       ? ["⭐ 星光代幣(答對 " + TOKEN_AT + " 題以上)", "+1"]
       : ["⭐ 星光代幣", "再答對 " + (TOKEN_AT - M.right) + " 題就能拿到"],
   );
+  if (!acct) rows.push(["🏆 排行榜", "登入後成績才會記錄"]);
   mEl("mrList").innerHTML = rows
     .map(([a, b]) => `<div class="row"><span>${a}</span><b>${b}</b></div>`)
     .join("");
@@ -420,9 +421,11 @@ function mCritUI() {
 }
 mEl("mrOk").onclick = () => {
   if (critPick === null) return;
-  money += M.coins;
-  if (critPick === "energy") P.energy += CRIT_ENERGY * M.crits;
-  if (critPick === "coins") money += CRIT_COINS * M.crits * (M.dbl ? 2 : 1);
+  addCoins(
+    M.coins + (critPick === "coins" ? CRIT_COINS * M.crits * (M.dbl ? 2 : 1) : 0),
+  );
+  if (critPick === "energy") addEnergy(CRIT_ENERGY * M.crits);
+  lbAdd(LB.math, M.right, M.total); // 答對題數、答題數累加到排行榜
   if (M.right >= TOKEN_AT) P.tokens++;
   P.dbl = false;
   P.mathPending = false;

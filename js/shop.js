@@ -291,8 +291,7 @@ $s("sdBuy").onclick = () => {
       save();
       done = true;
     }
-  } else if (money >= upPrice(it) && (up[it.k] || 0) < MAXL) {
-    money -= upPrice(it);
+  } else if ((up[it.k] || 0) < MAXL && spendCoins(upPrice(it))) {
     up[it.k] = (up[it.k] || 0) + 1;
     save();
     done = true;

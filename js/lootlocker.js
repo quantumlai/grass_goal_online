@@ -70,6 +70,26 @@ const llSetName = (sessionToken, name) =>
     body: { name },
   });
 
+// ── 需要遊戲 session 的 API(x-session-token)──
+// 路徑與欄位對照 LootLocker 官方 Unity SDK(LootLockerEndPoints.cs、BalanceRequests.cs、LeaderboardRequest.cs)
+const llGame = (sess, path, opt = {}) =>
+  llFetch("game/" + path, { ...opt, headers: { "x-session-token": sess, ...(opt.headers || {}) } });
+// 經濟系統:貨幣、錢包、餘額
+const llCurrencies = (s) => llGame(s, "currencies", { method: "GET" }); // → { currencies: [{ id, code, game_api_writes_enabled }] }
+const llWalletByHolder = (s, ulid) => llGame(s, "wallet/holder/" + ulid, { method: "GET" }); // → { id, holder_id }
+const llCreateWallet = (s, ulid) =>
+  llGame(s, "wallet", { body: { holder_id: ulid, holder_type: "player" } }); // → { wallet_id }
+const llBalances = (s, wallet) => llGame(s, "balances/wallet/" + wallet, { method: "GET" }); // → { balances: [{ amount, currency: { id, code } }] }
+const llCredit = (s, wallet, currencyId, n) =>
+  llGame(s, "balances/credit", { body: { amount: String(n), currency_id: currencyId, wallet_id: wallet } });
+const llDebit = (s, wallet, currencyId, n) =>
+  llGame(s, "balances/debit", { body: { amount: String(n), currency_id: currencyId, wallet_id: wallet } });
+// 排行榜
+const llLbMember = (s, key, member) =>
+  llGame(s, "leaderboards/" + key + "/member/" + encodeURIComponent(member), { method: "GET" }); // → { rank, score, metadata }
+const llLbSubmit = (s, key, member, score, metadata) =>
+  llGame(s, "leaderboards/" + key + "/submit", { body: { member_id: member, score, metadata } });
+
 // 把 API 錯誤翻成給小朋友和家長看得懂的中文
 function llErrorText(e) {
   const m = String((e && e.message) || "").toLowerCase();

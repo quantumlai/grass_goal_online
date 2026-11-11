@@ -19,6 +19,8 @@ const LL_ECONOMY = {
 const ENVS = {
   development: {
     name: "開發環境",
+    // 測試用:比賽、數學挑戰都縮短成 30 秒,答對 3 題就拿星光代幣
+    timing: { matchSecs: 30, mathSecs: 30, tokenAt: 3 },
     lootlocker: {
       apiDomain: "https://w3meemf6.api.lootlocker.com",
       domainKey: "w3meemf6",
@@ -29,6 +31,8 @@ const ENVS = {
   },
   production: {
     name: "正式環境",
+    // 比賽 3 分鐘、數學挑戰 2 分鐘,單次答對 12 題拿星光代幣
+    timing: { matchSecs: 180, mathSecs: 120, tokenAt: 12 },
     lootlocker: {
       // TODO: 填入正式環境的 game key(prod_ 開頭)。確認正式環境用的 API 網域是否相同。
       apiDomain: "https://w3meemf6.api.lootlocker.com",
@@ -52,3 +56,6 @@ const ENV_NAME = (() => {
   return local ? "development" : "production";
 })();
 const ENV = ENVS[ENV_NAME];
+const TIMING = ENV.timing;
+// 秒數轉成畫面文字:120 → "2 分鐘"、30 → "30 秒"
+const durText = (s) => (s % 60 === 0 ? s / 60 + " 分鐘" : s + " 秒");

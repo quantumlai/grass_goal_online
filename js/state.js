@@ -164,7 +164,7 @@ function reset() {
     me = all0.find((o) => o.ci === pick),
     all = [me, ...all0.filter((o) => o !== me)];
   G = {
-    t: 180,
+    t: TIMING.matchSecs, // 比賽時間(秒),見 config.js
     ents: all.map((o, i) => {
       const q = SPW[o.slot];
       return mk(i, o.tm ? W - q[0] : q[0], q[1], o.ci, o.tm, o.role);

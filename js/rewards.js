@@ -62,7 +62,7 @@ function onMatchEnd(res) {
     "</div>" +
     dailyHTML() +
     notes.map((n) => '<p class="note">' + n + "</p>").join("") +
-    '<p class="hint">完成 2 分鐘數學挑戰,就能領金幣、繼續下一場!</p>';
+    '<p class="hint">完成 ' + durText(MATH_SECS) + "數學挑戰,就能領金幣、繼續下一場!</p>";
   ui.style.display = "flex";
 }
 mEl("go").onclick = startMath;

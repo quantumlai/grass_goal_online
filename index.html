@@ -168,7 +168,7 @@
       <div id="msg"></div>
       <button id="go">📝 開始數學挑戰</button>
     </div>
-    <!-- 2 分鐘數學挑戰 -->
+    <!-- 數學挑戰(時間長度見 js/config.js) -->
     <div id="math" style="display: none">
       <div class="mtop">
         <div class="mtime"><i id="mBar"></i><b id="mTime">2:00</b></div>
@@ -180,11 +180,11 @@
         <div id="mDbl">🃏 雙倍卡生效中:每題金幣 ×2</div>
       </div>
       <div id="mIntro">
-        <h2>📝 2 分鐘數學挑戰</h2>
+        <h2 id="mTitle">📝 數學挑戰</h2>
         <ul>
           <li>每答對 1 題得 <b>15~20 金幣</b>(難題 20)</li>
           <li>連續答對 5 題觸發 <b>⚡能量暴擊</b></li>
-          <li>這次答對 <b>12 題以上</b>得到 <b>⭐星光代幣</b></li>
+          <li>這次答對 <b id="mTokenAt">12 題以上</b>得到 <b>⭐星光代幣</b></li>
           <li>答錯沒關係,會告訴你正確答案</li>
         </ul>
         <button id="mStart">準備好了,開始!</button>

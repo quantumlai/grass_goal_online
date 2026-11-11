@@ -1,7 +1,7 @@
-// 2 分鐘數學挑戰:題庫(小學三年級上學期)與作答流程
-const MATH_SECS = 120,
+// 數學挑戰(正式環境 2 分鐘):題庫(小學三年級上學期)與作答流程
+const MATH_SECS = TIMING.mathSecs, // 見 config.js
   CRIT_EVERY = 5, // 連續答對幾題觸發能量暴擊
-  TOKEN_AT = 12, // 單次答對幾題得到星光代幣
+  TOKEN_AT = TIMING.tokenAt, // 單次答對幾題得到星光代幣,見 config.js
   CRIT_ENERGY = 30,
   CRIT_COINS = 50;
 const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
@@ -256,6 +256,10 @@ function startMath() {
     dbl: P.dbl,
   };
   mathScr.style.display = "flex";
+  mEl("mTitle").textContent = "📝 " + durText(MATH_SECS) + "數學挑戰";
+  mEl("mTokenAt").textContent = TOKEN_AT + " 題以上";
+  mEl("mTime").textContent = ((MATH_SECS / 60) | 0) + ":" + String(MATH_SECS % 60).padStart(2, "0");
+  mEl("mBar").style.width = "100%";
   mEl("mIntro").style.display = "flex";
   mEl("mPlay").style.display = "none";
   mEl("mDbl").style.display = M.dbl ? "block" : "none";

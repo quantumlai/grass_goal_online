@@ -44,7 +44,7 @@ const ENVS = {
 };
 // 版本號:顯示在首頁右下角,用來確認手機上跑的是不是最新版。
 // 每次要推上 GitHub Pages 之前改一下(格式:年.月.日-當天第幾版)。
-const APP_VERSION = "2026.11.12-1";
+const APP_VERSION = "2026.11.12-2";
 const GAME_VERSION = "1.0.0";
 // Playroom Kit(好友房間連線)。只有打開「好友房間」時才會載入。
 // gameId:到 Playroom Dev Portal 建立專案後取得(Configuration → General)。

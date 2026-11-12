@@ -58,7 +58,8 @@ function showAcct(v) {
   view(v || (acct ? "aMe" : "aLogin"));
 }
 function updAcctBtn() {
-  aEl("hAcct").textContent = acct ? "👤 " + (acct.name || acct.email) : "👤 登入 / 註冊";
+  // 首頁顯示目前登入的是誰(選單裡的「帳號」文字固定不變)
+  aEl("hUser").textContent = acct ? "👤 " + (acct.name || acct.email) : "👤 未登入";
   const t = aEl("envTag");
   t.textContent = "DEV · " + ENV.name;
   t.style.display = ENV_NAME === "development" ? "" : "none";
@@ -256,6 +257,7 @@ aEl("aRToLogin").onclick = () => view(acct ? "aMe" : "aLogin");
 aEl("aMeReset").onclick = showReset;
 aEl("aDoneLogin").onclick = () => view("aLogin");
 aEl("hAcct").onclick = () => showAcct();
+aEl("hUser").onclick = () => showAcct();
 if (acct) econUseCached(); // 先用上次的餘額顯示,自動登入後再同步
 updAcctBtn();
 restoreLogin();

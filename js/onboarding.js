@@ -25,7 +25,7 @@ const UNLOCKS = [
   },
   {
     k: "acct",
-    els: ["hAcct"],
+    els: ["hAcct", "hUser"],
     need: () => P.played >= 5 || !!acct, // 已經登入的人一直顯示
     hint: "👤 「☰ 選單」裡可以建立帳號,把金幣和成績存起來。",
     btn: "hAcct",

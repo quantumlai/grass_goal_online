@@ -18,6 +18,13 @@ function showRoom() {
     syncProfile();
     roomUI();
   }
+  // 直接打開檔案(file://)時網頁沒有來源網址,Playroom 會拒絕連線
+  if (location.protocol === "file:") {
+    ["rmCreate", "rmJoin"].forEach((id) => (rEl(id).disabled = true));
+    rEl("rmMsg").className = "amsg err";
+    rEl("rmMsg").textContent =
+      "好友房間要用網址打開才能連線(直接開 index.html 檔案不行)。本機測試請在專案資料夾執行 python3 -m http.server 8765,再打開 http://localhost:8765";
+  }
   emoBtnUI();
 }
 // 數學挑戰做完:在房間裡就回房間,否則回首頁

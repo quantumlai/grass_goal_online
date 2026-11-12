@@ -98,6 +98,7 @@ function update(dt, inputs) {
   // 角色:依 G.ents 順序,真人照輸入、電腦照 AI
   for (const e of G.ents) {
     if (e.ctrl === "human") stepHuman(e, inputs[e.pid] || NO_INPUT, dt);
+    else if (e.ctrl === "dummy") stepDummy(e, dt);
     else stepAI(e, dt);
   }
   // 子彈
@@ -334,8 +335,8 @@ function update(dt, inputs) {
       bl.y = Math.max(bl.r, Math.min(H - bl.r, bl.y));
     }
   }
-  // 結束:結算交給 rewards.js(比賽獎勵 → 數學挑戰)
-  if (G.t <= 0 || G.score[0] >= 3 || G.score[1] >= 3) {
+  // 結束:結算交給 rewards.js(比賽獎勵 → 數學挑戰)。練習(tutorial.js)不結算
+  if (!G.practice && (G.t <= 0 || G.score[0] >= 3 || G.score[1] >= 3)) {
     G.over = true;
     const me = G.ents[G.me],
       sm = G.score[me.tm],
@@ -565,6 +566,20 @@ function stepAI(e, dt) {
         e.sup += 8;
       }
       e.cd = e.c.cd * (e.rapid > 0 ? 0.5 : 1.5) + Math.random() * 0.3;
+    }
+  }
+}
+
+// 練習用的稻草人:不動、不攻擊,被打倒 3 秒後原地重生
+function stepDummy(e, dt) {
+  e.hitT = Math.max(0, e.hitT - dt);
+  if (e.dead) {
+    e.dead -= dt;
+    if (e.dead <= 0) {
+      e.dead = 0;
+      e.hp = e.max;
+      e.x = e.sx;
+      e.y = e.sy;
     }
   }
 }

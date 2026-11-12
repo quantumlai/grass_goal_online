@@ -216,13 +216,18 @@ const QTYPES = [
 ];
 const QW = QTYPES.reduce((s, t) => s + t.w, 0);
 let lastQT = -1;
-function genQ() {
+// 單元清單(題型標籤去重複),數學練習時可以只選某些單元
+const Q_UNITS = [...new Set(QTYPES.map((t) => t.t))];
+// 出一題。units:只從這些單元出題(數學練習用),沒給就全部
+function genQ(units) {
+  const ok = QTYPES.map((t, i) => (!units || units.includes(t.t) ? i : -1)).filter((i) => i >= 0),
+    tw = ok.reduce((s, i) => s + QTYPES[i].w, 0);
   let i;
   do {
-    let r = Math.random() * QW;
-    i = 0;
-    while ((r -= QTYPES[i].w) > 0) i++;
-  } while (i === lastQT);
+    let r = Math.random() * tw;
+    i = ok[0];
+    for (const j of ok) if ((r -= QTYPES[j].w) <= 0) { i = j; break; }
+  } while (i === lastQT && ok.length > 1);
   lastQT = i;
   const t = QTYPES[i];
   return Object.assign({ t: t.t, c: t.c }, t.g());
@@ -234,7 +239,9 @@ const mathScr = mEl("math"),
   mresScr = mEl("mres");
 let M = null,
   mTimer = 0;
-function startMath() {
+// 開始數學挑戰。opts.practice = true 是「數學練習」:不計時、沒有獎勵、可以選單元
+function startMath(opts) {
+  const practice = !!(opts && opts.practice === true);
   homeOn = true; // 讓遊戲輸入不攔截觸控
   [home, ui, shopScr, sdetail, roster, detail, mresScr].forEach(
     (el) => (el.style.display = "none"),
@@ -253,9 +260,28 @@ function startMath() {
     cur: null,
     typed: "",
     lock: false,
-    dbl: P.dbl,
+    dbl: practice ? false : P.dbl,
+    practice,
+    units: null, // 練習時選的單元(null = 全部)
   };
   mathScr.style.display = "flex";
+  mathScr.classList.toggle("practice", practice);
+  mEl("mIntro").style.display = "flex"; // 先顯示說明頁,按開始才出現題目和鍵盤
+  mEl("mPlay").style.display = "none";
+  mEl("mRules").style.display = practice ? "none" : "";
+  mEl("mUnits").style.display = practice ? "" : "none";
+  mEl("mEnd").style.display = "none"; // 練習開始作答後才出現
+  mEl("mStart").textContent = practice ? "開始練習" : "準備好了,開始!";
+  mEl("mStart").disabled = false;
+  if (practice) {
+    mEl("mTitle").textContent = "📝 數學練習";
+    mEl("mTime").textContent = "練習模式 · 不計時、沒有獎勵";
+    mEl("mBar").style.width = "100%";
+    mEl("mDbl").style.display = "none";
+    buildUnitChips();
+    mHud();
+    return;
+  }
   mEl("mTitle").textContent = "📝 " + durText(MATH_SECS) + "數學挑戰";
   mEl("mTokenAt").textContent = TOKEN_AT + " 題以上";
   mEl("mTime").textContent = ((MATH_SECS / 60) | 0) + ":" + String(MATH_SECS % 60).padStart(2, "0");
@@ -266,12 +292,20 @@ function startMath() {
   mHud();
 }
 function mBegin() {
+  if (M.practice) {
+    M.units = [...document.querySelectorAll("#mUnits .on")].map((b) => b.dataset.u);
+    if (!M.units.length) return; // 至少選一個單元
+  }
   M.on = true;
   M.t0 = performance.now();
   mEl("mIntro").style.display = "none";
   mEl("mPlay").style.display = ""; // 版面交給 CSS(橫式手機會改成左右排)
   mNext();
   clearInterval(mTimer);
+  if (M.practice) {
+    mEl("mEnd").style.display = ""; // 練習不計時,自己按「結束練習」
+    return;
+  }
   mTimer = setInterval(mTick, 200);
   mTick();
 }
@@ -289,10 +323,12 @@ function mHud() {
   mEl("mStreak").textContent = "🔥 " + M.streak;
 }
 function mNext() {
-  M.cur = genQ();
+  M.cur = genQ(M.practice ? M.units : null);
   M.typed = "";
   M.lock = false;
-  mEl("mTag").textContent = M.cur.t + " · 答對 +" + M.cur.c * (M.dbl ? 2 : 1) + " 💰";
+  mEl("mTag").textContent = M.practice
+    ? M.cur.t
+    : M.cur.t + " · 答對 +" + M.cur.c * (M.dbl ? 2 : 1) + " 💰";
   mEl("mFx").textContent = "";
   mEl("mFx").className = "";
   mDraw();
@@ -320,9 +356,12 @@ function mSubmit() {
   if (+M.typed === M.cur.a) {
     M.right++;
     M.streak++;
-    M.coins += M.cur.c * (M.dbl ? 2 : 1);
+    if (!M.practice) M.coins += M.cur.c * (M.dbl ? 2 : 1);
     mDraw("ok");
-    if (M.streak % CRIT_EVERY === 0) {
+    if (M.practice) {
+      fx.textContent = M.streak >= 3 ? "答對了!連續 " + M.streak + " 題 🔥" : "答對了!";
+      fx.className = "ok";
+    } else if (M.streak % CRIT_EVERY === 0) {
       M.crits++;
       fx.textContent = "⚡ 能量暴擊!連續答對 " + M.streak + " 題";
       fx.className = "crit";
@@ -331,7 +370,7 @@ function mSubmit() {
       fx.className = "ok";
     }
     mHud();
-    setTimeout(() => M.on && mNext(), M.streak % CRIT_EVERY === 0 ? 900 : 450);
+    setTimeout(() => M.on && mNext(), !M.practice && M.streak % CRIT_EVERY === 0 ? 900 : 450);
   } else {
     M.streak = 0;
     M.wrong.push({ q: M.cur.q, a: M.cur.a, you: M.typed });
@@ -376,14 +415,18 @@ function mFinish() {
   const base = M.dbl ? M.coins / 2 : M.coins;
   mEl("mrBig").innerHTML =
     "<b>" + M.right + "</b><small>答對題數(共作答 " + M.total + " 題)</small>";
-  const rows = [["💰 答題金幣", "+" + base]];
+  mresScr.querySelector("h2").textContent = M.practice ? "📝 練習結束" : "⏰ 時間到!";
+  const rows = M.practice
+    ? [["📝 練習模式", "沒有獎勵,也不會記錄成績"]]
+    : [["💰 答題金幣", "+" + base]];
   if (M.dbl) rows.push(["🃏 雙倍卡 ×2", "+" + base]);
-  rows.push(
-    M.right >= TOKEN_AT
-      ? ["⭐ 星光代幣(答對 " + TOKEN_AT + " 題以上)", "+1"]
-      : ["⭐ 星光代幣", "再答對 " + (TOKEN_AT - M.right) + " 題就能拿到"],
-  );
-  if (!acct) rows.push(["🏆 排行榜", "登入後成績才會記錄"]);
+  if (!M.practice)
+    rows.push(
+      M.right >= TOKEN_AT
+        ? ["⭐ 星光代幣(答對 " + TOKEN_AT + " 題以上)", "+1"]
+        : ["⭐ 星光代幣", "再答對 " + (TOKEN_AT - M.right) + " 題就能拿到"],
+    );
+  if (!acct && !M.practice) rows.push(["🏆 排行榜", "登入後成績才會記錄"]);
   mEl("mrList").innerHTML = rows
     .map(([a, b]) => `<div class="row"><span>${a}</span><b>${b}</b></div>`)
     .join("");
@@ -422,10 +465,16 @@ function mCritUI() {
   }
   const ok = mEl("mrOk");
   ok.disabled = critPick === null;
-  ok.textContent = critPick === null ? "先選暴擊獎勵" : "領取獎勵";
+  ok.textContent = M.practice ? "完成" : critPick === null ? "先選暴擊獎勵" : "領取獎勵";
 }
 mEl("mrOk").onclick = () => {
   if (critPick === null) return;
+  if (M.practice) {
+    // 練習:不給獎勵、不記錄、不影響「打完比賽要做數學」的規則
+    M = null;
+    afterMath();
+    return;
+  }
   addCoins(
     M.coins + (critPick === "coins" ? CRIT_COINS * M.crits * (M.dbl ? 2 : 1) : 0),
   );
@@ -438,3 +487,33 @@ mEl("mrOk").onclick = () => {
   M = null;
   afterMath(); // 在好友房間就回房間,否則回首頁(room.js)
 };
+
+// ── 數學練習:選單元 ──
+function buildUnitChips() {
+  const el = mEl("mUnits");
+  el.innerHTML =
+    '<p>想練哪些單元?(可以選好幾個)</p><div class="chips">' +
+    Q_UNITS.map((u) => '<button class="on" data-u="' + u + '">' + u + "</button>").join("") +
+    '</div><div class="chips2"><button data-all="1">全選</button><button data-all="0">全部取消</button></div>';
+  el.querySelectorAll("[data-u]").forEach(
+    (b) =>
+      (b.onclick = () => {
+        b.classList.toggle("on");
+        unitStartUI();
+      }),
+  );
+  el.querySelectorAll("[data-all]").forEach(
+    (b) =>
+      (b.onclick = () => {
+        el.querySelectorAll("[data-u]").forEach((x) => x.classList.toggle("on", b.dataset.all === "1"));
+        unitStartUI();
+      }),
+  );
+  unitStartUI();
+}
+function unitStartUI() {
+  const n = document.querySelectorAll("#mUnits .on").length;
+  mEl("mStart").disabled = n === 0;
+  mEl("mStart").textContent = n === 0 ? "先選一個單元" : "開始練習";
+}
+mEl("mEnd").onclick = () => M && M.practice && mFinish();

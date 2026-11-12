@@ -440,7 +440,7 @@ function draw() {
   ctx.fillStyle = "#fff";
   ctx.font = "800 26px sans-serif";
   ctx.fillText(
-    Math.floor(t / 60) + ":" + String(t % 60).padStart(2, "0"),
+    G.practice ? "練習" : Math.floor(t / 60) + ":" + String(t % 60).padStart(2, "0"),
     vw / 2,
     38,
   );

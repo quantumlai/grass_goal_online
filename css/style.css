@@ -1625,3 +1625,162 @@ button.link {
   user-select: text;
   -webkit-user-select: text;
 }
+
+/* ===== 數學練習 ===== */
+#math.practice #mCoins {
+  display: none;
+}
+#math.practice .mtime i {
+  background: #7c8cff;
+}
+#mEnd {
+  align-self: center;
+  font-size: 14px;
+  padding: 5px 14px;
+}
+#mUnits p {
+  margin: 0 0 6px;
+  font-weight: 800;
+}
+#mUnits .chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+#mUnits .chips button,
+#mUnits .chips2 button {
+  font-size: 14px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: none;
+}
+#mUnits .chips button.on {
+  background: var(--accent);
+  color: #3a2a00;
+  border-color: #fff;
+}
+#mUnits .chips2 {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+#mUnits .chips2 button {
+  font-size: 12px;
+  padding: 3px 10px;
+}
+#mStart:disabled {
+  opacity: 0.5;
+}
+
+/* ===== 首頁:練習與好友房間 ===== */
+.hrow2 {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+  pointer-events: auto;
+}
+.hrow2 button {
+  font-size: 14px;
+  padding: 6px 12px;
+}
+#hTut.hint {
+  background: var(--accent);
+  color: #3a2a00;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+@media (max-height: 520px) {
+  .hrow2 button {
+    font-size: 12px;
+    padding: 3px 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #hTut.hint {
+    animation: none;
+  }
+}
+
+/* ===== 遊戲練習的說明面板 ===== */
+#tut {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 58px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  width: min(440px, calc(100vw - 24px));
+  box-sizing: border-box;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(15, 18, 60, 0.88);
+  border: 3px solid var(--accent);
+  text-align: center;
+  pointer-events: none; /* 讓手指可以穿過面板操作搖桿 */
+}
+#tut button {
+  pointer-events: auto;
+}
+#tut p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+}
+#tut b {
+  color: var(--accent);
+}
+#tut.good {
+  border-color: #4ade80;
+}
+#tut.good p {
+  font-size: 22px;
+  font-weight: 900;
+  color: #4ade80;
+}
+.tuttop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+.tuttop button {
+  font-size: 12px;
+  padding: 3px 10px;
+}
+#tut.done {
+  top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  gap: 10px;
+  padding: 18px;
+}
+#tut.done h3 {
+  margin: 0;
+  font-size: 26px;
+  color: var(--accent);
+}
+.tutbtns {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.tutbtns button {
+  font-size: 16px;
+  padding: 8px 14px;
+}
+@media (max-height: 520px) {
+  #tut {
+    top: calc(env(safe-area-inset-top, 0px) + 46px);
+    padding: 6px 10px;
+  }
+  #tut p {
+    font-size: 13px;
+  }
+}

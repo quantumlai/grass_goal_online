@@ -15,7 +15,9 @@ function loop(ts) {
           Net.publish(G);
         } else Net.sendInput(readLocalInput());
       }
+      tutTick(dt); // 遊戲練習的步驟判斷(tutorial.js)
       if (G) draw();
+      drawTutHints();
     }
   } catch (err) {
     console.error(err);

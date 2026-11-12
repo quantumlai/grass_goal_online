@@ -46,6 +46,7 @@ const P = {
   skins: [], // 已解鎖的造型
   skinEq: {}, // {角色索引: 造型 k}
   mathPending: false, // 打完比賽還沒做數學挑戰
+  tutDone: false, // 做完過一次遊戲練習
   dbl: false, // 下一場數學挑戰金幣 ×2
   daily: { date: "", wins: 0, m3: false, m5: false },
   pick: 0,

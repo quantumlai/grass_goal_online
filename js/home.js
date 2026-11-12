@@ -27,11 +27,14 @@ function updHome() {
     " · " +
     c.job +
     "</small>";
+  // 還沒練習過:練習按鈕閃爍提醒
+  document.getElementById("hTut").classList.toggle("hint", !P.tutDone);
   const pl = document.getElementById("play");
   pl.textContent = P.mathPending ? "📝 先做數學" : "出擊!";
 }
 function showHome() {
   homeOn = true;
+  if (typeof tutStop === "function") tutStop(); // 從練習回首頁
   [ui, shopScr, sdetail, roster, detail, mathScr, mresScr, acctScr, roomScr].forEach(
     (el) => (el.style.display = "none"),
   );

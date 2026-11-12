@@ -40,7 +40,11 @@
           <div id="hName"></div>
           <button class="arrow" id="hNext" aria-label="下一個角色">›</button>
         </div>
-        <button id="hRoom" class="ch">👥 好友房間</button>
+        <div class="hrow2">
+          <button id="hTut" class="ch">🎓 遊戲練習</button
+          ><button id="hRoom" class="ch">👥 好友房間</button
+          ><button id="hMathP" class="ch">📝 數學練習</button>
+        </div>
         <div class="hbtns">
           <button class="sbtn" id="hShop">🛒<small>商店</small></button
           ><button id="play">出擊!</button
@@ -209,6 +213,8 @@
         </div>
       </div>
     </div>
+    <!-- 遊戲練習的步驟說明(tutorial.js) -->
+    <div id="tut" style="display: none"></div>
     <!-- 比賽中的表情按鈕(只有好友房間會出現) -->
     <button id="emoBtn" style="display: none" aria-label="表情">😊</button>
     <div id="emoPanel" class="emos" style="display: none"></div>
@@ -228,10 +234,12 @@
           ><span class="pill" id="mStreak">🔥 0</span>
         </div>
         <div id="mDbl">🃏 雙倍卡生效中:每題金幣 ×2</div>
+        <button id="mEnd" class="ch" style="display: none">結束練習</button>
       </div>
       <div id="mIntro">
         <h2 id="mTitle">📝 數學挑戰</h2>
-        <ul>
+        <div id="mUnits" style="display: none"></div>
+        <ul id="mRules">
           <li>每答對 1 題得 <b>15~20 金幣</b>(難題 20)</li>
           <li>連續答對 5 題觸發 <b>⚡能量暴擊</b></li>
           <li>這次答對 <b id="mTokenAt">12 題以上</b>得到 <b>⭐星光代幣</b></li>
@@ -275,6 +283,7 @@
     <script src="js/account.js"></script>
     <script src="js/playroom.js"></script>
     <script src="js/room.js"></script>
+    <script src="js/tutorial.js"></script>
     <script src="js/main.js"></script>
   </body>
 </html>

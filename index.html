@@ -19,6 +19,7 @@
   <body>
     <canvas id="c"></canvas>
     <div id="home">
+      <div id="ver"></div>
       <div class="htop">
         <div class="hrow">
           <span class="pill" id="hMoney">💰 0</span
@@ -191,17 +192,21 @@
           <small>房間代碼</small><b id="rmCodeShow"></b>
           <button id="rmCopy" class="ch">📋 複製邀請連結</button>
         </div>
-        <div id="rmList"></div>
+        <!-- 選英雄(決定隊伍)放在名單上方,手機上不用捲動就看得到 -->
         <div class="rmpick">
           <button class="arrow" id="rmPrev" aria-label="上一個英雄">‹</button>
           <div id="rmHero"></div>
           <button class="arrow" id="rmNext" aria-label="下一個英雄">›</button>
         </div>
+        <div id="rmList"></div>
         <div id="rmEmos" class="emos"></div>
-        <div id="rmNote" class="amsg" role="status" aria-live="polite"></div>
-        <button id="rmMath" style="display: none">📝 先做數學挑戰</button>
-        <button id="rmGo">⚽ 開始比賽</button>
         <button id="rmLeave" class="ch">離開房間</button>
+        <!-- 固定在畫面底部:提示與主要按鈕,名單再長也看得到 -->
+        <div class="rmfoot">
+          <div id="rmNote" class="amsg" role="status" aria-live="polite"></div>
+          <button id="rmMath" style="display: none">📝 先做數學挑戰</button>
+          <button id="rmGo">⚽ 開始比賽</button>
+        </div>
       </div>
     </div>
     <!-- 比賽中的表情按鈕(只有好友房間會出現) -->

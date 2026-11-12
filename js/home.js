@@ -55,6 +55,9 @@ function startMatch() {
   mouse.down = false;
 }
 document.getElementById("play").onclick = startMatch;
+// 首頁右下角的版本號(開發環境另外標示)
+document.getElementById("ver").textContent =
+  "v" + APP_VERSION + (ENV_NAME === "development" ? " · dev" : "");
 document.getElementById("hChars").onclick = () => showRoster();
 document.getElementById("hShop").onclick = () => showShop();
 // 首頁左右切換只在已解鎖的英雄之間

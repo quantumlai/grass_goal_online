@@ -251,7 +251,7 @@
 | 環境 | LootLocker API 網域 | Game key |
 | --- | --- | --- |
 | 開發 | `https://w3meemf6.api.lootlocker.com` | `dev_a954d…2380` |
-| 正式 | `https://1jjsx26h.api.lootlocker.com` | `dev_27d71…6fdf`（目前用的是這個遊戲的**開發環境**，見下方說明） |
+| 正式 | `https://1jjsx26h.api.lootlocker.com` | `dev_27d71…6fdf` |
 
 | 環境 | 比賽時間 | 數學挑戰時間 |
 | --- | --- | --- |
@@ -262,15 +262,13 @@
 
 這些設定在 `config.js` 每個環境的 `timing`：`matchSecs` 是比賽秒數，`mathSecs` 是數學秒數，`tokenAt` 是拿星光代幣要答對的題數。畫面上的「2 分鐘數學挑戰」這類文字會跟著設定變。
 
-**LootLocker 的環境由 game key 決定：** `prod_` 開頭會連到 LootLocker 的 Live（正式）環境，其他都連到 Development（開發）環境。White Label 登入需要的 `is-development` 標頭會自動跟 key 對齊，不用手動設定。LootLocker 後台的平台設定（White Label Login）、貨幣、排行榜都是**兩個環境分開設定**的。
+**為什麼開發和正式是兩個不同的 LootLocker 遊戲：** LootLocker 已經不再使用 Stage/Live 雙環境系統，新建立的遊戲只有一個環境，也只會拿到 `dev_` 開頭的 key，沒有 `prod_` key。所以開發和正式各建一個獨立的 LootLocker 遊戲。White Label 登入需要的 `is-development` 標頭會自動跟 key 對齊（`dev_` 開頭就是 `true`），不用手動設定。
 
-正式環境目前填的是 `dev_` key，所以實際用的是 `1jjsx26h` 這個遊戲的開發環境。要真正上線時：
+正式環境那個遊戲的後台，也要另外做一次跟開發環境一樣的設定：
 
-1. 在 LootLocker 後台切到 **Live** 環境。
-2. 開啟 **White Label Login**，並設定驗證信。
-3. 建立並發佈貨幣 `CIN`、`PPT`，開啟 Game API writes。
-4. 建立排行榜 `grass_goal_online_math`、`grass_goal_online_wins`，設定同上。
-5. 把 `config.js` 正式環境的 `gameKey` 換成 `prod_` 開頭的 key。
+1. 開啟 **White Label Login**，並設定驗證信的寄件資訊。（✅ 已確認開啟）
+2. 建立並發佈貨幣 `CIN`、`PPT`，開啟 Game API writes。
+3. 建立排行榜 `grass_goal_online_math`、`grass_goal_online_wins`，設定同開發環境。
 
 如果某個環境的 game key 是空的，那個環境的帳號功能會停用，但遊戲本身照常可以玩。
 

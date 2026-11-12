@@ -5,7 +5,8 @@
 //   2. 在本機打開(file://、localhost、127.0.0.1、區網 IP)→ 開發環境
 //   3. 其他網址(例如 GitHub Pages)→ 正式環境
 //
-// LootLocker 的 game key 開頭是 dev_ 或 prod_,本身就決定了連到哪個環境(isDevelopment 會自動設定)。
+// LootLocker 已經不再區分 Stage/Live 兩個環境,新建立的遊戲只有一個環境、只有 dev_ 開頭的 key。
+// 所以開發和正式各用一個獨立的 LootLocker 遊戲(各自的網域與 key)。
 // game key 與 domain key 是給遊戲客戶端用的公開金鑰,會出現在瀏覽器裡;
 // 不要把 LootLocker 後台的 server key 或帳號密碼放進這個檔案。
 // LootLocker 後台建立的經濟系統貨幣代碼與排行榜 key(開發、正式環境共用;不同的話再分開寫)
@@ -33,9 +34,7 @@ const ENVS = {
     // 比賽 3 分鐘、數學挑戰 2 分鐘,單次答對 12 題拿星光代幣
     timing: { matchSecs: 180, mathSecs: 120, tokenAt: 12 },
     lootlocker: {
-      // 目前用的是 dev_ key,所以連到這個遊戲的「開發環境」。
-      // 要真正上線:在 LootLocker 後台切到 Live 環境,開啟 White Label Login、發佈貨幣、建立排行榜,
-      // 再把這裡換成 prod_ 開頭的 key。
+      // 正式環境用另一個獨立的 LootLocker 遊戲。後台的 White Label、貨幣、排行榜要在這個遊戲裡另外設定一次。
       apiDomain: "https://1jjsx26h.api.lootlocker.com",
       domainKey: "1jjsx26h",
       gameKey: "dev_27d7155e7efb473097dba7f324246fdf",
@@ -66,8 +65,8 @@ const ENV_NAME = (() => {
   return local ? "development" : "production";
 })();
 const ENV = ENVS[ENV_NAME];
-// LootLocker 的環境由 game key 決定:prod_ 開頭用 Live(正式),其他用 Development(開發)。
-// White Label 登入要另外送 is-development 標頭,這裡自動跟 key 對齊,避免兩邊對不上。
+// White Label 登入要送 is-development 標頭,這裡自動跟 key 對齊:
+// dev_ 開頭(現在所有新遊戲都是)→ true;只有舊版雙環境遊戲的 prod_ key 才是 false。
 for (const e of Object.values(ENVS))
   e.lootlocker.isDevelopment = !/^prod_/.test(e.lootlocker.gameKey);
 const TIMING = ENV.timing;

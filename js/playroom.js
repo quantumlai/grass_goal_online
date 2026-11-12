@@ -123,7 +123,7 @@ function syncProfile(force) {
   PR.myPlayer().setState("prof", prof, true);
 }
 const profOf = (pl) => pl.getState("prof");
-// 房間裡的真人玩家(已送出資料的,最多 4 位)
+// 房間裡的真人玩家(已送出資料的,最多 PLAYROOM.maxPlayers 位)
 function roomPlayers() {
   return room.players
     .map((pl) => ({ pl, prof: profOf(pl) }))

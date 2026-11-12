@@ -269,7 +269,7 @@ function mBegin() {
   M.on = true;
   M.t0 = performance.now();
   mEl("mIntro").style.display = "none";
-  mEl("mPlay").style.display = "flex";
+  mEl("mPlay").style.display = ""; // 版面交給 CSS(橫式手機會改成左右排)
   mNext();
   clearInterval(mTimer);
   mTimer = setInterval(mTick, 200);

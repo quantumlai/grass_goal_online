@@ -753,6 +753,9 @@ button:focus-visible {
   padding: 4px 10px;
   font-size: 14px;
 }
+#mPlay {
+  display: flex;
+}
 #mIntro,
 #mPlay {
   flex-direction: column;
@@ -1335,4 +1338,133 @@ button.link {
   background: rgba(0, 0, 0, 0.6);
   padding: 8px;
   border-radius: 14px;
+}
+
+/* ===== 矮螢幕(橫式手機):首頁、數學挑戰改成緊湊版面 ===== */
+@media (max-height: 520px) {
+  #home {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 6px);
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+  }
+  .htop {
+    gap: 3px;
+  }
+  .pill {
+    font-size: 13px;
+    padding: 2px 10px;
+    border-width: 2px;
+  }
+  #logo {
+    font-size: 30px;
+    margin: 0;
+    -webkit-text-stroke-width: 2px;
+    text-shadow:
+      0 3px 0 #b8860b,
+      0 6px 0 rgba(0, 0, 0, 0.35);
+  }
+  #tag {
+    font-size: 11px;
+    padding: 1px 8px;
+    border-width: 2px;
+  }
+  .daily {
+    font-size: 11px;
+    padding: 2px 10px;
+  }
+  .dbar i {
+    width: 16px;
+    height: 12px;
+    line-height: 12px;
+    font-size: 8px;
+  }
+  #hAcct {
+    font-size: 12px;
+    padding: 3px 10px;
+  }
+  .hbot {
+    gap: 4px;
+  }
+  #hName {
+    font-size: 17px;
+  }
+  .arrow {
+    font-size: 24px;
+  }
+  #hRoom {
+    font-size: 13px;
+    padding: 3px 12px;
+  }
+  #play {
+    font-size: 24px;
+    padding: 8px 26px;
+  }
+  .sbtn {
+    font-size: 20px;
+    padding: 5px 10px;
+    min-width: 52px;
+  }
+  /* 數學挑戰:上方資訊縮小,題目在左、數字鍵盤在右 */
+  .mtop {
+    gap: 4px;
+  }
+  .mtime {
+    height: 22px;
+  }
+  .mtime b {
+    line-height: 22px;
+    font-size: 15px;
+  }
+  .mstat .pill {
+    font-size: 12px;
+  }
+  #mDbl {
+    font-size: 12px;
+    padding: 2px 8px;
+  }
+  #mIntro {
+    gap: 6px;
+  }
+  #mIntro h2 {
+    font-size: 22px;
+  }
+  #mIntro ul {
+    line-height: 1.5;
+    font-size: 14px;
+  }
+  #mPlay {
+    display: grid;
+    grid-template-columns: 1fr 260px;
+    grid-template-areas:
+      "tag pad"
+      "q pad"
+      "fx pad";
+    grid-template-rows: auto 1fr auto;
+    align-items: center;
+    justify-items: center;
+    max-width: 720px;
+    gap: 4px 16px;
+  }
+  #mTag {
+    grid-area: tag;
+  }
+  #mQ {
+    grid-area: q;
+    font-size: 30px;
+  }
+  #mFx {
+    grid-area: fx;
+    font-size: 16px;
+  }
+  #mAns {
+    display: none;
+  }
+  #mPad {
+    grid-area: pad;
+    gap: 6px;
+    margin: 0;
+  }
+  #mPad button {
+    font-size: 22px;
+    padding: 6px 0;
+  }
 }

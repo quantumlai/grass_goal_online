@@ -160,27 +160,45 @@ function mk(i, x, y, ci, tm, role, pl) {
     sy: y,
   };
 }
-// 開一場新比賽。players:這場的真人玩家(最多 4 位),其餘位置由電腦補滿 7 對 7。
-// 每位真人依所選英雄決定隊伍,優先坐英雄本來的位置;同隊同位置已經有人時改坐其他空位。
+// 每隊的陣型:位置(角色定位)與開場站位。座標是藍隊(左半場)的,紅隊左右對稱。
+// 改人數只要改這裡;好友房間的人數上限在 config.js 的 PLAYROOM.maxPlayers。
+const FORMATION = [
+  { role: 0, x: 90, y: 350 }, // 守門員
+  { role: 2, x: 330, y: 260 }, // 中場
+  { role: 3, x: 400, y: 460 }, // 前鋒
+];
+const TEAM_SIZE = FORMATION.length;
+// 英雄本來的位置(角色資料裡有後衛)對應到陣型裡最接近的位置;一樣近時選比較前面的
+const nearSlot = (row, heroRole) =>
+  row
+    .filter((s) => !s.pl)
+    .sort((a, b) => Math.abs(a.role - heroRole) - Math.abs(b.role - heroRole) || b.role - a.role)[0];
+const FORM_ROLES = [...new Set(FORMATION.map((f) => f.role))];
+const formRole = (heroRole) =>
+  FORM_ROLES.slice().sort((a, b) => Math.abs(a - heroRole) - Math.abs(b - heroRole) || b - a)[0];
+// 真人玩家該坐哪一隊:英雄本來的隊伍坐滿了,就換到另一隊(英雄不變)
+function teamOf(players) {
+  const cnt = [0, 0],
+    out = {};
+  for (const pl of players) {
+    let t = CH[pl.ci].team;
+    if (cnt[t] >= TEAM_SIZE) t = 1 - t;
+    if (cnt[t] >= TEAM_SIZE) continue; // 兩隊都滿(人數超過 2 × TEAM_SIZE)
+    cnt[t]++;
+    out[pl.id] = t;
+  }
+  return out;
+}
+// 開一場新比賽。players:這場的真人玩家,其餘位置由電腦補滿(每隊 TEAM_SIZE 人)。
+// 真人坐最接近英雄本來位置的空位(後衛英雄 → 中場);電腦補人時,依同樣的對應挑英雄。
 function reset(players = Net.players()) {
-  const SPW = [
-      [90, 500],
-      [240, 300],
-      [260, 500],
-      [240, 700],
-      [420, 380],
-      [420, 620],
-      [580, 500],
-    ],
-    SL = [0, 1, 1, 1, 2, 2, 3]; // 每隊 7 個位置的角色定位:守門員、後衛×3、中場×2、前鋒
-  const slots = [];
+  const tmOf = teamOf(players),
+    slots = [];
   for (const t of [0, 1]) {
-    const row = SL.map((role, slot) => ({ tm: t, role, slot, ci: null, pl: null })),
+    const row = FORMATION.map((f, slot) => ({ tm: t, role: f.role, slot, ci: null, pl: null })),
       used = new Set();
-    for (const pl of players.filter((pl) => CH[pl.ci].team === t)) {
-      const s =
-        row.find((s) => !s.pl && s.role === CH[pl.ci].role) || row.find((s) => !s.pl);
-      if (!s) continue;
+    for (const pl of players.filter((pl) => tmOf[pl.id] === t)) {
+      const s = nearSlot(row, CH[pl.ci].role);
       s.pl = pl;
       s.ci = pl.ci;
       used.add(pl.ci);
@@ -188,7 +206,7 @@ function reset(players = Net.players()) {
     for (const s of row) {
       if (s.pl) continue;
       const ofTeam = CH.map((c, i) => i).filter((i) => CH[i].team === t);
-      let cs = ofTeam.filter((i) => CH[i].role === s.role && !used.has(i));
+      let cs = ofTeam.filter((i) => formRole(CH[i].role) === s.role && !used.has(i));
       if (!cs.length) cs = ofTeam.filter((i) => !used.has(i));
       if (!cs.length) cs = ofTeam;
       s.ci = cs[(Math.random() * cs.length) | 0];
@@ -200,8 +218,8 @@ function reset(players = Net.players()) {
   const all = slots.filter((s) => s.pl).concat(slots.filter((s) => !s.pl));
   G = makeG(
     all.map((s, i) => {
-      const q = SPW[s.slot];
-      return mk(i, s.tm ? W - q[0] : q[0], q[1], s.ci, s.tm, s.role, s.pl);
+      const f = FORMATION[s.slot];
+      return mk(i, s.tm ? W - f.x : f.x, f.y, s.ci, s.tm, s.role, s.pl);
     }),
   );
 }

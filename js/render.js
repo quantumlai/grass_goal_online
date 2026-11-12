@@ -38,8 +38,15 @@ function draw() {
   ctx.fillStyle = "#14203a";
   ctx.fillRect(0, 0, vw, vh);
   const p = G.ents[G.me]; // 鏡頭、HUD 跟著本機玩家
-  const cx = Math.max(vw / 2 / sc, Math.min(W - vw / 2 / sc, p.x)),
-    cy = Math.max(vh / 2 / sc, Math.min(H - vh / 2 / sc, p.y));
+  // 鏡頭跟著自己;畫面比場地還寬(或高)時,那個方向就置中
+  const hw = vw / 2 / sc,
+    hh = vh / 2 / sc,
+    cx = hw * 2 >= W ? W / 2 : Math.max(hw, Math.min(W - hw, p.x)),
+    // 直式手機場地比畫面矮:放在上方比分列和下方按鈕之間,留空間給手指
+    cy =
+      hh * 2 >= H
+        ? H / 2 - ((70 + HUD.top - (170 + HUD.b)) / 2) / sc
+        : Math.max(hh, Math.min(H - hh, p.y));
   G.cam.x = cx;
   G.cam.y = cy;
   const sh = G.shake > 0 ? (Math.random() - 0.5) * 8 : 0;
@@ -67,20 +74,21 @@ function draw() {
   ctx.strokeStyle = "rgba(255,255,255,.55)";
   ctx.lineWidth = 5;
   ctx.beginPath();
-  ctx.arc(W / 2, H / 2, 90, 0, 6.28);
+  ctx.arc(W / 2, H / 2, 70, 0, 6.28);
   ctx.moveTo(W / 2, T);
   ctx.lineTo(W / 2, H - T);
-  ctx.rect(T, 260, 170, 480);
-  ctx.rect(W - T - 170, 260, 170, 480);
+  ctx.rect(T, H / 2 - 170, 130, 340); // 禁區
+  ctx.rect(W - T - 130, H / 2 - 170, 130, 340);
   ctx.stroke();
+  // 球門
   ctx.fillStyle = "rgba(59,130,246,.4)";
-  ctx.fillRect(0, 350, T * 1.4, 300);
+  ctx.fillRect(0, GOAL_Y0, T * 1.4, GOAL_Y1 - GOAL_Y0);
   ctx.fillStyle = "rgba(239,68,68,.4)";
-  ctx.fillRect(W - T * 1.4, 350, T * 1.4, 300);
+  ctx.fillRect(W - T * 1.4, GOAL_Y0, T * 1.4, GOAL_Y1 - GOAL_Y0);
   for (const gx of [0, W - T * 1.4]) {
     ctx.strokeStyle = "rgba(255,255,255,.4)";
     ctx.lineWidth = 1.5;
-    for (let yy = 350; yy <= 650; yy += 20) {
+    for (let yy = GOAL_Y0; yy <= GOAL_Y1; yy += 20) {
       ctx.beginPath();
       ctx.moveTo(gx, yy);
       ctx.lineTo(gx + T * 1.4, yy);
@@ -88,16 +96,16 @@ function draw() {
     }
     for (let xx = 0; xx <= T * 1.4; xx += 14) {
       ctx.beginPath();
-      ctx.moveTo(gx + xx, 350);
-      ctx.lineTo(gx + xx, 650);
+      ctx.moveTo(gx + xx, GOAL_Y0);
+      ctx.lineTo(gx + xx, GOAL_Y1);
       ctx.stroke();
     }
   }
   for (const [px, py] of [
-    [T * 1.4, 350],
-    [T * 1.4, 650],
-    [W - T * 1.4, 350],
-    [W - T * 1.4, 650],
+    [T * 1.4, GOAL_Y0],
+    [T * 1.4, GOAL_Y1],
+    [W - T * 1.4, GOAL_Y0],
+    [W - T * 1.4, GOAL_Y1],
   ]) {
     ctx.fillStyle = "rgba(0,0,0,.3)";
     ctx.beginPath();
@@ -405,7 +413,9 @@ function draw() {
     ctx.fillStyle = vg;
     ctx.fillRect(0, 0, vw, vh);
   }
-  // HUD
+  // HUD(上方的比分、時間、大招條往下避開瀏海)
+  ctx.save();
+  ctx.translate(0, HUD.top);
   ctx.textAlign = "left";
   ctx.fillStyle = "rgba(0,0,0,.45)";
   ctx.fillRect(10, 12, 138, 40);
@@ -445,9 +455,10 @@ function draw() {
   ctx.font = "700 12px sans-serif";
   ctx.textAlign = "right";
   ctx.fillText(p.sup >= 100 ? "大招就緒!" : "大招", vw - 20, 18);
+  ctx.restore();
   {
-    const bx2 = vw - 148,
-      by2 = vh - 46,
+    const bx2 = HUD.ab[0],
+      by2 = HUD.ab[1],
       rdy = !(p.acd > 0);
     ctx.fillStyle = rdy ? p.col : "rgba(0,0,0,.55)";
     ctx.beginPath();
@@ -464,8 +475,8 @@ function draw() {
     ctx.fillText(rdy ? p.c.aname : Math.ceil(p.acd) + "s", bx2, by2 + 22);
   }
   {
-    const rx = vw - 130,
-      ry = vh - 122,
+    const rx = HUD.roll[0],
+      ry = HUD.roll[1],
       ok = !(p.rcd > 0);
     ctx.fillStyle = ok ? "#e9ecef" : "rgba(0,0,0,.55)";
     ctx.beginPath();
@@ -482,8 +493,8 @@ function draw() {
     ctx.fillText(ok ? "翻滾" : Math.ceil(p.rcd) + "s", rx, ry + 20);
   }
   {
-    const sx = vw - 62,
-      sy = vh - 78,
+    const sx = HUD.sup[0],
+      sy = HUD.sup[1],
       rd = p.sup >= 100,
       pr = Math.min(1, p.sup / 100);
     ctx.fillStyle = rd ? "#ffd23f" : "rgba(0,0,0,.55)";
@@ -558,16 +569,17 @@ function draw() {
   for (const [st, hx, hy, col, fc, lb] of [
     [
       stick.l,
-      110,
-      vh - 110,
+      110 + HUD.l,
+      vh - 110 - HUD.b,
       "rgba(90,160,255,.5)",
       "rgba(70,140,255,.12)",
       "移動",
     ],
     [
       stick.r,
-      vw - 262,
-      vh - 110,
+      // 窄螢幕(直式手機)兩個提示圈會疊在一起,攻擊提示改放到按鈕上方
+      vw < 600 ? vw * 0.72 : vw - 262 - HUD.r,
+      vw < 600 ? vh - 250 - HUD.b : vh - 110 - HUD.b,
       "rgba(255,90,90,.5)",
       "rgba(255,60,60,.12)",
       "攻擊",

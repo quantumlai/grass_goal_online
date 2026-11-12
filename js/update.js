@@ -470,21 +470,21 @@ function stepAI(e, dt) {
             o !== e &&
             Math.hypot(bl.x - o.x, bl.y - o.y) < dB,
         ).length,
-        gk = e.role === 0 && Math.abs(bl.x - own) > 380,
-        df = e.role === 1 && Math.abs(bl.x - own) > 650 && dB > 260,
-        fw = e.role === 3 && cl >= 1 && Math.abs(bl.x - own) < 620;
+        gk = e.role === 0 && Math.abs(bl.x - own) > 380 * FS, // 距離乘上 FS(場地縮放)
+        df = e.role === 1 && Math.abs(bl.x - own) > 650 * FS && dB > 260 * FS,
+        fw = e.role === 3 && cl >= 1 && Math.abs(bl.x - own) < 620 * FS;
       if (gk) {
-        e.ai.tx = own + (e.tm ? -120 : 120);
+        e.ai.tx = own + (e.tm ? -120 : 120) * FS;
         e.ai.ty = H / 2 + (bl.y - H / 2) * 0.45;
       } else if (df) {
-        e.ai.tx = own + (e.tm ? -340 : 340);
+        e.ai.tx = own + (e.tm ? -340 : 340) * FS;
         e.ai.ty = H / 2 + (bl.y - H / 2) * 0.5;
       } else if (fw) {
-        e.ai.tx = gx + (e.tm ? 380 : -380);
-        e.ai.ty = H / 2 + (e.id % 2 ? 1 : -1) * 150;
+        e.ai.tx = gx + (e.tm ? 380 : -380) * FS;
+        e.ai.ty = H / 2 + (e.id % 2 ? 1 : -1) * 150 * FS;
       } else if (cl >= 2) {
-        e.ai.tx = bl.x + (gx > bl.x ? 150 : -150);
-        e.ai.ty = H / 2 + (e.role - 1.5) * 170;
+        e.ai.tx = bl.x + (gx > bl.x ? 150 : -150) * FS;
+        e.ai.ty = H / 2 + (e.role - 1.5) * 170 * FS;
       } else if (dB < e.r + bl.r + 14) {
         e.ai.tx = gx;
         e.ai.ty = H / 2;
@@ -493,8 +493,8 @@ function stepAI(e, dt) {
         e.ai.tx = bl.x - Math.cos(dg) * 32;
         e.ai.ty = bl.y - Math.sin(dg) * 32;
       }
-      e.ai.tx = Math.max(100, Math.min(W - 100, e.ai.tx));
-      e.ai.ty = Math.max(100, Math.min(H - 100, e.ai.ty));
+      e.ai.tx = Math.max(T * 2, Math.min(W - T * 2, e.ai.tx));
+      e.ai.ty = Math.max(T * 2, Math.min(H - T * 2, e.ai.ty));
     } else if (tgt && bd > e.c.keep) {
       e.ai.tx = tgt.x + (Math.random() - 0.5) * 100;
       e.ai.ty = tgt.y + (Math.random() - 0.5) * 100;
@@ -515,7 +515,7 @@ function stepAI(e, dt) {
       Math.hypot(bl2.x - e.x, bl2.y - e.y) < e.r + bl2.r + 26
     ) {
       const ka = Math.atan2(
-        H / 2 + (Math.random() - 0.5) * 110 - bl2.y,
+        H / 2 + (Math.random() - 0.5) * (GOAL_Y1 - GOAL_Y0) * 0.37 - bl2.y, // 瞄準球門口中間
         gx2 - bl2.x,
       );
       e.ang = ka;

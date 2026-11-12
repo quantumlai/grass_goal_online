@@ -6,7 +6,7 @@
 // 介面:
 //   isHost()             這台裝置是否負責跑 update()(房主)
 //   myId()               本機玩家的 id(對應角色的 pid)
-//   players()            這場比賽的真人玩家 [{ id, name, ci: 英雄, loadout }](最多 4 位)
+//   players()            這場比賽的真人玩家 [{ id, name, ci: 英雄, loadout }](最多 PLAYROOM.maxPlayers 位)
 //   collectInputs()      房主:取得這一幀所有真人的輸入 { 玩家 id: 輸入資料 }
 //   sendInput(inp)       非房主:把自己這一幀的輸入送給房主
 //   publish(G)           房主:模擬完一幀後把狀態送給其他玩家

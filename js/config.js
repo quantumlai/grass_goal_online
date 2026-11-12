@@ -49,7 +49,7 @@ const GAME_VERSION = "1.0.0";
 const PLAYROOM = {
   sdk: "https://unpkg.com/playroomkit@0.0.97/multiplayer.full.umd.js", // 固定版本,升級前先測試
   gameId: "1n71gAP8uNaLs5JyZqdG", 
-  maxPlayers: 4,
+  maxPlayers: 6, // 3 對 3 坐滿兩隊
   snapHz: 15, // 房主每秒送幾次狀態
   inputHz: 30, // 其他玩家每秒送幾次輸入
 };

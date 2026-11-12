@@ -40,17 +40,20 @@ function roomUI() {
   rEl("rmCodeShow").textContent = PR.getRoomCode() || "";
   const ps = roomPlayers(),
     myId = PR.myPlayer().id,
-    hostId = PR.getState("hostId");
+    hostId = PR.getState("hostId"),
+    tmOf = teamOf(ps.map(({ pl, prof }) => ({ id: pl.id, ci: prof.ci }))); // 實際會坐哪一隊
   rEl("rmList").innerHTML =
     ps
       .map(({ pl, prof }) => {
         const c = CH[prof.ci],
-          e = emo.show[pl.id];
+          e = emo.show[pl.id],
+          tm = tmOf[pl.id] ?? c.team,
+          moved = tm !== c.team;
         return (
           '<div class="rmp' +
           (pl.id === myId ? " me" : "") +
           '" style="border-color:' +
-          TEAMC[c.team] +
+          TEAMC[tm] +
           '"><span class="rmic">' +
           c.icon +
           "</span><div><b>" +
@@ -58,7 +61,8 @@ function roomUI() {
           escHtml(prof.name) +
           (pl.id === myId ? "(你)" : "") +
           "</b><small>" +
-          TEAMN[c.team] +
+          TEAMN[tm] +
+          (moved ? "(原隊已滿)" : "") +
           " · " +
           c.name +
           " · " +
@@ -72,7 +76,11 @@ function roomUI() {
       })
       .join("") +
     (ps.length < PLAYROOM.maxPlayers
-      ? '<p class="ahint">把房間代碼或邀請連結傳給朋友,最多 ' + PLAYROOM.maxPlayers + " 人。其他位置由電腦補滿 7 對 7。</p>"
+      ? '<p class="ahint">把房間代碼或邀請連結傳給朋友,最多 ' +
+        PLAYROOM.maxPlayers +
+        " 人。每隊 " +
+        TEAM_SIZE +
+        " 人,沒坐滿的位置由電腦補上;英雄的隊伍坐滿了,會自動換到另一隊。</p>"
       : "");
   const c = CH[pick];
   rEl("rmHero").innerHTML =

@@ -13,19 +13,15 @@ addEventListener(
     if (ui.style.display !== "none" || homeOn) return;
     if (e.target.closest && e.target.closest("#emoBtn,#emoPanel")) return; // 表情按鈕交給 DOM 處理
     for (const t of e.changedTouches) {
-      if (Math.hypot(t.clientX - (vw - 62), t.clientY - (vh - 78)) < 50) {
+      if (Math.hypot(t.clientX - HUD.sup[0], t.clientY - HUD.sup[1]) < 50) {
         superReq = true;
         continue;
       }
-      if (
-        Math.hypot(t.clientX - (vw - 148), t.clientY - (vh - 46)) < 38
-      ) {
+      if (Math.hypot(t.clientX - HUD.ab[0], t.clientY - HUD.ab[1]) < 38) {
         abReq = true;
         continue;
       }
-      if (
-        Math.hypot(t.clientX - (vw - 130), t.clientY - (vh - 122)) < 32
-      ) {
+      if (Math.hypot(t.clientX - HUD.roll[0], t.clientY - HUD.roll[1]) < 32) {
         rollReq = true;
         continue;
       }
@@ -92,15 +88,15 @@ addEventListener("mousemove", (e) => {
 });
 addEventListener("mousedown", (e) => {
   if (e.target.closest && e.target.closest("#emoBtn,#emoPanel")) return;
-  if (Math.hypot(e.clientX - (vw - 62), e.clientY - (vh - 78)) < 50) {
+  if (Math.hypot(e.clientX - HUD.sup[0], e.clientY - HUD.sup[1]) < 50) {
     superReq = true;
     return;
   }
-  if (Math.hypot(e.clientX - (vw - 148), e.clientY - (vh - 46)) < 38) {
+  if (Math.hypot(e.clientX - HUD.ab[0], e.clientY - HUD.ab[1]) < 38) {
     abReq = true;
     return;
   }
-  if (Math.hypot(e.clientX - (vw - 130), e.clientY - (vh - 122)) < 32) {
+  if (Math.hypot(e.clientX - HUD.roll[0], e.clientY - HUD.roll[1]) < 32) {
     rollReq = true;
     return;
   }

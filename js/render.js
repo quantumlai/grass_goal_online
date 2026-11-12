@@ -253,6 +253,7 @@ function draw() {
   // 角色
   const ws = walls.slice().sort((a, b) => a.y + a.h - (b.y + b.h));
   let wi = 0;
+  const labelQ = [];
   for (const e of [...G.ents].sort((a, b) => a.y - b.y)) {
     while (wi < ws.length && ws[wi].y + ws[wi].h <= e.y + e.r)
       drawWall(ws[wi++]);
@@ -286,28 +287,22 @@ function draw() {
     ctx.beginPath();
     ctx.ellipse(e.x, e.y + e.r - 2, e.r + 7, 9, 0, 0, 6.28);
     ctx.stroke();
-    if (e.id === G.me) {
+    const isMe = e.id === G.me;
+    if (isMe) {
       ctx.strokeStyle = "#fff";
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 3.5;
       ctx.beginPath();
       ctx.ellipse(e.x, e.y + e.r - 2, e.r + 11, 12, 0, 0, 6.28);
       ctx.stroke();
     }
 
     ctx.globalAlpha = 1;
-    // 血條
-    const bw = 44,
-      by = e.y - e.r - 18;
-    ctx.fillStyle = "rgba(0,0,0,.55)";
-    ctx.fillRect(e.x - bw / 2 - 2, by - 2, bw + 4, 9);
-    ctx.fillStyle = e.tm === p.tm ? "#5ee06f" : "#ff5b6b";
-    ctx.fillRect(e.x - bw / 2, by, (bw * Math.max(0, e.hp)) / e.max, 5);
-    ctx.fillStyle = "#fff";
-    ctx.font = "700 11px sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText(nm(e) + (e.cubes ? " ⬆" + e.cubes : ""), e.x, by - 5);
+    labelQ.push(e); // 名字和血條最後才畫(見 drawLabel),才不會被牆擋住
   }
   while (wi < ws.length) drawWall(ws[wi++]);
+  // 名字和血條畫在最上層;自己的放最後,不會被別人蓋住
+  for (const e of labelQ) if (e.id !== G.me) drawLabel(e, p);
+  for (const e of labelQ) if (e.id === G.me) drawLabel(e, p);
   // 瞄準線
   if (!p.dead && stick.r.id !== null) {
     ctx.strokeStyle = "rgba(255,70,70,.85)";
@@ -471,7 +466,7 @@ function draw() {
     ctx.textAlign = "center";
     ctx.font = "22px sans-serif";
     ctx.fillText(p.c.icon, bx2, by2 + 2);
-    ctx.font = "700 11px sans-serif";
+    ctx.font = "800 12px sans-serif";
     ctx.fillText(rdy ? p.c.aname : Math.ceil(p.acd) + "s", bx2, by2 + 22);
   }
   {
@@ -489,7 +484,7 @@ function draw() {
     ctx.textAlign = "center";
     ctx.font = "20px sans-serif";
     ctx.fillText("💨", rx, ry + 3);
-    ctx.font = "700 11px sans-serif";
+    ctx.font = "800 12px sans-serif";
     ctx.fillText(ok ? "翻滾" : Math.ceil(p.rcd) + "s", rx, ry + 20);
   }
   {
@@ -510,7 +505,7 @@ function draw() {
     ctx.fillStyle = rd ? "#3a2a00" : "#fff";
     ctx.font = "26px sans-serif";
     ctx.fillText("⚡", sx, sy + 4);
-    ctx.font = "800 12px sans-serif";
+    ctx.font = "800 13px sans-serif";
     ctx.fillText(
       rd ? p.c.sname : "大招 " + Math.floor(p.sup) + "%",
       sx,
@@ -1319,4 +1314,54 @@ function drawChar(e) {
 }
 function sand() {
   return "#8fd16b";
+}
+
+// 角色頭上的血條和名字(畫在最上層)。手機上鏡頭縮小(sc < 1.25)時依比例放大,名字在螢幕上至少約 13px
+function drawLabel(e, p) {
+  const isMe = e.id === G.me;
+  ctx.globalAlpha = 1;
+  const k = Math.max(1, 1.25 / sc),
+    bw = 44 * k,
+    bh = 5 * k,
+    by = e.y - e.r - 12 - 6 * k;
+  ctx.fillStyle = "rgba(0,0,0,.55)";
+  ctx.fillRect(e.x - bw / 2 - 2, by - 2, bw + 4, bh + 4);
+  ctx.fillStyle = e.tm === p.tm ? "#5ee06f" : "#ff5b6b";
+  ctx.fillRect(e.x - bw / 2, by, (bw * Math.max(0, e.hp)) / e.max, bh);
+  const label = nm(e) + (e.cubes ? " ⬆" + e.cubes : ""),
+    fs = 11 * k,
+    ly = by - 4 * k;
+  ctx.font = (isMe ? "900 " : "700 ") + fs + "px sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  if (isMe) {
+    // 自己:黃底黑字的名牌,頭上一個上下跳動的黃色箭頭
+    const tw = ctx.measureText(label).width + 10 * k;
+    ctx.fillStyle = "#ffd23f";
+    ctx.strokeStyle = "#14122b";
+    ctx.lineWidth = 2 * k;
+    ctx.beginPath();
+    ctx.roundRect(e.x - tw / 2, ly - fs, tw, fs + 5 * k, 5 * k);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#14122b";
+    ctx.fillText(label, e.x, ly);
+    const ay = ly - fs - 6 * k - Math.abs(Math.sin(G.t * 5)) * 6 * k;
+    ctx.fillStyle = "#ffd23f";
+    ctx.beginPath();
+    ctx.moveTo(e.x, ay);
+    ctx.lineTo(e.x - 8 * k, ay - 10 * k);
+    ctx.lineTo(e.x + 8 * k, ay - 10 * k);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  } else {
+    // 其他人:白字加深色描邊,在草地上也看得清楚
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "rgba(0,0,0,.75)";
+    ctx.lineWidth = 3 * k;
+    ctx.strokeText(label, e.x, ly);
+    ctx.fillStyle = "#fff";
+    ctx.fillText(label, e.x, ly);
+  }
 }

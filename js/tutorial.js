@@ -1,7 +1,8 @@
 // 遊戲練習(教學關卡):一步一步學會移動、攻擊、帶球、射門、放大招
 // 隨時都可以從首頁進來練。場上只有自己和一個不會動、不會攻擊的稻草人,沒有時間限制、沒有獎勵。
 const isTouchUI = () => matchMedia("(pointer: coarse)").matches; // 手機、平板用手指操作
-const TUT = { on: false, step: 0, wait: 0, done: false, sx: 0, sy: 0, hits: 0, lastHp: 0, score0: 0, t: 0 };
+// mini:說明面板收起來(只剩一個小標籤),換步驟時維持收起
+const TUT = { on: false, step: 0, wait: 0, done: false, sx: 0, sy: 0, hits: 0, lastHp: 0, score0: 0, t: 0, mini: false };
 const tutEl = document.getElementById("tut");
 const tutMe = () => G.ents[G.me],
   tutDummy = () => G.ents.find((e) => e.ctrl === "dummy");
@@ -131,9 +132,20 @@ function tutUI(good) {
     tutEl.innerHTML =
       "<h3>🎉 練習完成!</h3><p>你已經會移動、攻擊、帶球、射門和放大招了!<br>對方球門進 3 球就贏,也可以用翻滾躲子彈、用超能力幫忙。</p>" +
       '<div class="tutbtns"><button data-a="again" class="ch">再練一次</button><button data-a="play">開始比賽</button><button data-a="home" class="ch">回首頁</button></div>';
+  } else if (TUT.mini) {
+    // 收起:只剩一個小標籤,點一下展開重看說明
+    const s = TUT_STEPS[TUT.step],
+      label = good ? "✅ 很好!" : "📖 練習 " + (TUT.step + 1) + "/" + TUT_STEPS.length + " · " + s.title;
+    const prev = tutEl.dataset.label,
+      changed = !!prev && prev !== label; // 換步驟才閃,剛收起不閃
+    tutEl.className = "mini" + (good ? " good" : "") + (changed ? " flash" : "");
+    tutEl.dataset.label = label;
+    tutEl.innerHTML =
+      '<button data-a="expand" aria-label="展開練習說明">' + label + ' <span class="tutmore">▾ 看說明</span></button>';
   } else {
     const s = TUT_STEPS[TUT.step];
     tutEl.className = good ? "good" : "";
+    tutEl.dataset.label = "";
     tutEl.innerHTML =
       '<div class="tuttop"><span>練習 ' +
       (TUT.step + 1) +
@@ -141,7 +153,7 @@ function tutUI(good) {
       TUT_STEPS.length +
       " · <b>" +
       s.title +
-      '</b></span><button data-a="home" class="ch">離開</button></div><p>' +
+      '</b></span><span class="tutbar"><button data-a="mini" class="ch" aria-label="收起練習說明">▴ 收起</button><button data-a="home" class="ch">離開</button></span></div><p>' +
       (good ? "✅ 很好!" : isTouchUI() ? s.touch : s.mouse) +
       "</p>";
   }
@@ -150,6 +162,11 @@ function tutUI(good) {
       (b.onclick = (ev) => {
         ev.stopPropagation();
         const a = b.dataset.a;
+        if (a === "mini" || a === "expand") {
+          TUT.mini = a === "mini";
+          tutUI(TUT.wait > 0);
+          return;
+        }
         tutStop();
         if (a === "again") startTutorial();
         else if (a === "play") {

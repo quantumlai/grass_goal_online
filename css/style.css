@@ -1784,3 +1784,45 @@ button.link {
     font-size: 13px;
   }
 }
+
+/* 練習說明收起後的小標籤 */
+.tutbar {
+  display: flex;
+  gap: 6px;
+}
+#tut.mini {
+  width: auto;
+  max-width: calc(100vw - 24px);
+  padding: 0;
+  border-width: 2px;
+  background: rgba(15, 18, 60, 0.75);
+}
+#tut.mini button {
+  font-size: 14px;
+  padding: 6px 12px;
+  background: none;
+  color: #fff;
+  box-shadow: none;
+  white-space: nowrap;
+}
+#tut.mini .tutmore {
+  color: var(--accent);
+  font-size: 12px;
+  margin-left: 4px;
+}
+#tut.mini.good {
+  border-color: #4ade80;
+}
+#tut.mini.flash {
+  animation: tutflash 0.5s 3;
+}
+@keyframes tutflash {
+  50% {
+    background: rgba(255, 210, 63, 0.9);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #tut.mini.flash {
+    animation: none;
+  }
+}

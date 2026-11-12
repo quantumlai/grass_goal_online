@@ -189,6 +189,8 @@ async function doJoin(code) {
   ["rmCreate", "rmJoin"].forEach((id) => (rEl(id).disabled = true));
   try {
     await joinRoom(code);
+    P.roomUsed = true; // 用過好友房間(例如點邀請連結),首頁就顯示好友房間按鈕
+    save();
     msg.textContent = "";
     room.note = "";
     showRoom();

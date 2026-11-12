@@ -8,7 +8,7 @@ function B(e, a, o) {
     b.d *= 1.15;
     b.sp *= 1.25;
   }
-  b.d *= 1 + 0.1 * (e.cubes || 0) + (e.id === 0 ? myAtkAdd() : 0);
+  b.d *= 1 + 0.1 * (e.cubes || 0) + (e.mods ? e.mods.atk : 0);
   G.bul.push(b);
 }
 function shoot(e, ang, sup) {
@@ -23,7 +23,7 @@ function shoot(e, ang, sup) {
       col: e.col,
     });
     G.parts.push({ x: e.x, y: e.y, t: 0.5, heal: 1, col: e.col });
-    if (e.id === 0) G.shake = 0.25;
+    if (e.id === G.me) G.shake = 0.25; // 畫面震動只給本機玩家
   }
   if (k === "gun") {
     if (sup)
@@ -424,7 +424,7 @@ function useAbility(e) {
     e.shield = 1.2;
     G.parts.push({ x: nx, y: ny, t: 0.4, ghost: e.col, r: e.r });
   }
-  e.acd = e.c.acd * (e.id === 0 ? Math.pow(0.94, up.cdr) : 1);
+  e.acd = e.c.acd * e.mods.cdr;
   G.parts.push({
     x: e.x,
     y: e.y - 34,
@@ -439,36 +439,7 @@ function doRoll(e, dx, dy) {
   const m = Math.hypot(dx, dy);
   e.rollA = m > 0.1 ? Math.atan2(dy, dx) : e.ang;
   e.roll = 0.22;
-  e.rcd = 3.5 * (e.id === 0 ? Math.pow(0.92, up.roll) : 1);
-}
-function shootOld(e, ang, sup) {
-  if (sup) {
-    for (let i = -3; i <= 3; i++)
-      G.bul.push({
-        x: e.x,
-        y: e.y,
-        a: ang + i * 0.16,
-        o: e.id,
-        d: 28,
-        sp: 520,
-        life: 0.7,
-        r: 7,
-        sup: 1,
-      });
-  } else
-    for (let i = -1; i <= 1; i++)
-      G.bul.push({
-        x: e.x,
-        y: e.y,
-        a: ang + i * 0.11,
-        o: e.id,
-        d: 12,
-        sp: 480,
-        life: 0.6,
-        r: 5,
-      });
-  e.vx -= Math.cos(ang) * 40;
-  e.vy -= Math.sin(ang) * 40;
+  e.rcd = 3.5 * e.mods.roll;
 }
 function kickBall(e, ang) {
   const bl = G.ball;
@@ -476,7 +447,7 @@ function kickBall(e, ang) {
     return false;
   const ks =
     (e.kickBoost > 0 ? 1000 : 700) *
-    (e.id === 0 ? myKickMul() : 1) *
+    e.mods.kick *
     (e.c.k === "bat" ? 1.25 : 1);
   bl.vx = Math.cos(ang) * ks;
   bl.vy = Math.sin(ang) * ks;
@@ -528,19 +499,19 @@ function hurt(e, d, by) {
   if (e.c.k === "wall") d *= 0.9;
   if (e.shield > 0) d *= 0.25;
   if (e.dash > 0) d *= 0.5;
-  if (e.id === 0) d *= myDefMul();
+  d *= e.mods.def;
   e.hp -= d;
   e.hitT = 0.15;
   if (e.hp <= 0) {
-    e.dead = e.id === 0 ? 3 * Math.pow(0.85, up.resp) : 3;
+    e.dead = 3 * e.mods.resp;
     const n = e.gems;
     e.gems = 0;
     dropGem(e.x, e.y, n + 0);
     G.gems.push({ x: e.x, y: e.y - 8, vx: 0, vy: -60, age: 0, cube: 1 });
     e.cubes = 0;
-    e.max = e.c.hp * (e.id === 0 ? myHpMul() : 1);
+    e.max = e.c.hp * e.mods.hp;
     G.parts.push({ x: e.x, y: e.y, t: 0.5, boom: 1 });
-    if (e.id === 0) G.shake = 0.3;
+    if (e.id === G.me) G.shake = 0.3;
   }
 }
 function move(e, dx, dy, dt, sp) {

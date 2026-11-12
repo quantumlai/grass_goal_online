@@ -82,34 +82,68 @@ const skinOf = (ci) => {
   const s = SKINS.find((s) => s.k === P.skinEq[ci]);
   return s ? s.pal : null;
 };
-const accVal = (k) => (P.accEq === k ? ACCS.find((a) => a.k === k).v : 0);
-// 你操控角色的加成:商店升級 × 英雄等級 × 配件
-const myHpMul = () => (1 + 0.1 * up.hp) * (1 + 0.05 * (heroLv(pick) - 1));
-const myAtkAdd = () =>
-  0.1 * up.atk + 0.05 * (heroLv(pick) - 1) + accVal("glove");
-const myDefMul = () => 1 - accVal("helm");
-const mySpdMul = () => (1 + 0.05 * up.spd) * (1 + accVal("shoe"));
-const myChgMul = () => (1 + 0.15 * up.chg) * (1 + accVal("core"));
-const myKickMul = () => (1 + 0.08 * up.kick) * (1 + accVal("boot"));
+const skinPal = (k) => {
+  const s = SKINS.find((s) => s.k === k);
+  return s ? s.pal : null;
+};
+
+// ── 玩家配置(loadout)與角色加成(mods) ──
+// loadout:一位真人玩家帶進比賽的東西,連線時會傳給房主。
+//   { up: 商店升級, lv: 英雄等級, acc: 裝備中的配件, skin: 造型 k }
+// mods:由 loadout 算出來、掛在角色身上的倍率。電腦角色用 NEUTRAL_MODS(全部不加成)。
+function myLoadout() {
+  return { up: { ...up }, lv: heroLv(pick), acc: P.accEq, skin: P.skinEq[pick] || null };
+}
+function makeMods(lo) {
+  const u = lo.up || {},
+    n = (k) => u[k] || 0,
+    lv = lo.lv || 1,
+    acc = (k) => (lo.acc === k ? ACCS.find((a) => a.k === k).v : 0);
+  return {
+    hp: (1 + 0.1 * n("hp")) * (1 + 0.05 * (lv - 1)), // 血量倍率
+    atk: 0.1 * n("atk") + 0.05 * (lv - 1) + acc("glove"), // 傷害加成(加在 1 上)
+    def: 1 - acc("helm"), // 受到傷害倍率
+    spd: (1 + 0.05 * n("spd")) * (1 + acc("shoe")), // 移動速度倍率
+    chg: (1 + 0.15 * n("chg")) * (1 + acc("core")), // 大招充能倍率
+    kick: (1 + 0.08 * n("kick")) * (1 + acc("boot")), // 踢球力道倍率
+    rate: Math.pow(0.92, n("rate")), // 攻擊間隔倍率
+    cdr: Math.pow(0.94, n("cdr")), // 超能力冷卻倍率
+    roll: Math.pow(0.92, n("roll")), // 翻滾冷卻倍率
+    resp: Math.pow(0.85, n("resp")), // 重生時間倍率
+    charm: lo.acc === "charm", // 再生護符
+  };
+}
+const NEUTRAL_MODS = makeMods({});
 let pick = isUnlocked(P.pick) ? P.pick : P.unlocked[0];
 const RL = ["守", "後", "中", "前"],
   ROLES = ["守門員", "後衛", "中場", "前鋒"];
+// 角色頭上的名字:自己加「你·」,其他真人玩家加上他的名稱
 const nm = (e) =>
-  (e.id ? "" : "你·") + e.c.icon + e.c.name + "·" + RL[e.role];
+  (e.id === G.me ? "你·" : e.pname ? e.pname + "·" : "") +
+  e.c.icon +
+  e.c.name +
+  "·" +
+  RL[e.role];
 const cols = ["#4cc9f0", "#ff6b6b", "#b5e48c", "#c77dff", "#ffa94d"];
-function mk(i, x, y, ci, tm, role) {
-  const c = CH[ci];
+// 建立一個場上角色。pl 是真人玩家({ id, name, ci, loadout }),電腦角色傳 null
+function mk(i, x, y, ci, tm, role, pl) {
+  const c = CH[ci],
+    mods = pl ? makeMods(pl.loadout) : NEUTRAL_MODS;
   return {
     c,
     tm,
     role,
-    id: i,
+    id: i, // 等於在 G.ents 裡的位置,子彈、地雷用它找回主人
+    ctrl: pl ? "human" : "ai",
+    pid: pl ? pl.id : null, // 真人玩家 id,用來對應每一幀的輸入
+    pname: pl ? pl.name || "" : "",
+    mods,
     x,
     y,
     r: c.k === "tank" || c.k === "wall" || c.k === "brute" ? 21 : 16,
-    hp: c.hp * (i === 0 ? myHpMul() : 1),
-    max: c.hp * (i === 0 ? myHpMul() : 1),
-    skin: i === 0 ? skinOf(ci) : null,
+    hp: c.hp * mods.hp,
+    max: c.hp * mods.hp,
+    skin: pl ? skinPal(pl.loadout.skin) : null,
     ang: 0,
     cd: 0,
     sup: 0,
@@ -126,7 +160,9 @@ function mk(i, x, y, ci, tm, role) {
     sy: y,
   };
 }
-function reset() {
+// 開一場新比賽。players:這場的真人玩家(最多 4 位),其餘位置由電腦補滿 7 對 7。
+// 每位真人依所選英雄決定隊伍,優先坐英雄本來的位置;同隊同位置已經有人時改坐其他空位。
+function reset(players = Net.players()) {
   const SPW = [
       [90, 500],
       [240, 300],
@@ -136,39 +172,39 @@ function reset() {
       [420, 620],
       [580, 500],
     ],
-    SL = [0, 1, 1, 1, 2, 2, 3];
-  const lu = (t) => {
-    const used = new Set(),
-      L = [];
-    let took = false;
-    if (CH[pick].team === t) used.add(pick);
-    for (let q = 0; q < SL.length; q++) {
-      const r = SL[q];
-      if (CH[pick].team === t && CH[pick].role === r && !took) {
-        took = true;
-        L.push(pick);
-        continue;
-      }
-      const cs = CH.map((c, i) => i).filter(
-        (i) => CH[i].team === t && CH[i].role === r && !used.has(i),
-      );
-      const ci = cs[(Math.random() * cs.length) | 0];
-      used.add(ci);
-      L.push(ci);
+    SL = [0, 1, 1, 1, 2, 2, 3]; // 每隊 7 個位置的角色定位:守門員、後衛×3、中場×2、前鋒
+  const slots = [];
+  for (const t of [0, 1]) {
+    const row = SL.map((role, slot) => ({ tm: t, role, slot, ci: null, pl: null })),
+      used = new Set();
+    for (const pl of players.filter((pl) => CH[pl.ci].team === t)) {
+      const s =
+        row.find((s) => !s.pl && s.role === CH[pl.ci].role) || row.find((s) => !s.pl);
+      if (!s) continue;
+      s.pl = pl;
+      s.ci = pl.ci;
+      used.add(pl.ci);
     }
-    return L;
-  };
-  const mkT = (t) =>
-    lu(t).map((ci, q) => ({ ci, tm: t, role: SL[q], slot: q }));
-  const all0 = mkT(0).concat(mkT(1)),
-    me = all0.find((o) => o.ci === pick),
-    all = [me, ...all0.filter((o) => o !== me)];
+    for (const s of row) {
+      if (s.pl) continue;
+      const ofTeam = CH.map((c, i) => i).filter((i) => CH[i].team === t);
+      let cs = ofTeam.filter((i) => CH[i].role === s.role && !used.has(i));
+      if (!cs.length) cs = ofTeam.filter((i) => !used.has(i));
+      if (!cs.length) cs = ofTeam;
+      s.ci = cs[(Math.random() * cs.length) | 0];
+      used.add(s.ci);
+    }
+    slots.push(...row);
+  }
+  // 真人排在最前面(id 0 起),電腦在後
+  const all = slots.filter((s) => s.pl).concat(slots.filter((s) => !s.pl));
   G = {
     t: TIMING.matchSecs, // 比賽時間(秒),見 config.js
-    ents: all.map((o, i) => {
-      const q = SPW[o.slot];
-      return mk(i, o.tm ? W - q[0] : q[0], q[1], o.ci, o.tm, o.role);
+    ents: all.map((s, i) => {
+      const q = SPW[s.slot];
+      return mk(i, s.tm ? W - q[0] : q[0], q[1], s.ci, s.tm, s.role, s.pl);
     }),
+    me: 0, // 本機玩家操控的角色在 G.ents 的位置
     bul: [],
     mines: [],
     clouds: [],
@@ -185,57 +221,7 @@ function reset() {
     over: false,
     shake: 0,
   };
-}
-function resetOld() {
-  const oth = [0, 1, 2, 3, 4, 5, 6, 7]
-    .filter((i) => i !== pick)
-    .sort(() => Math.random() - 0.5);
-  const SPW = [
-    [90, 500],
-    [240, 400],
-    [360, 620],
-    [470, 500],
-  ];
-  const lu = (t) => {
-    const L = [];
-    for (let r = 0; r < 4; r++) {
-      const cs = CH.map((c, i) => i).filter(
-        (i) => CH[i].team === t && CH[i].role === r,
-      );
-      L.push(
-        CH[pick].team === t && CH[pick].role === r
-          ? pick
-          : cs[(Math.random() * cs.length) | 0],
-      );
-    }
-    return L;
-  };
-  const TA = lu(0).map((ci, r) => ({ ci, tm: 0, role: r })),
-    TB = lu(1).map((ci, r) => ({ ci, tm: 1, role: r }));
-  const me = (CH[pick].team ? TB : TA)[CH[pick].role];
-  const all = [me, ...TA.concat(TB).filter((o) => o !== me)];
-  G = {
-    t: 180,
-    ents: all.map((o, i) => {
-      const q = SPW[o.role];
-      return mk(i, o.tm ? W - q[0] : q[0], q[1], o.ci, o.tm, o.role);
-    }),
-    bul: [],
-    mines: [],
-    clouds: [],
-    turrets: [],
-    gems: [],
-    ball: { x: W / 2, y: H / 2, vx: 0, vy: 0, r: 15, last: null },
-    score: [0, 0],
-    goalT: 0,
-    goalMsg: "",
-    goalCol: "#fff",
-    parts: [],
-    spawn: 3,
-    cam: { x: 0, y: 0 },
-    over: false,
-    shake: 0,
-  };
+  G.me = Math.max(0, G.ents.findIndex((e) => e.pid === Net.myId()));
 }
 function dropGem(x, y, n) {
   for (let i = 0; i < n; i++)

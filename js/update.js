@@ -1,6 +1,7 @@
-// 每幀遊戲邏輯 update(dt)
-function update(dt) {
-  const p = G.ents[0];
+// 每幀遊戲邏輯 update(dt, inputs)
+// inputs:{ 玩家 id: 輸入資料 }(見 input.js)。真人角色照輸入行動,電腦角色照 AI。
+// 只有房主會跑這個函式;連線時其他玩家只接收房主送來的結果。
+function update(dt, inputs) {
   G.t -= dt;
   G.shake = Math.max(0, G.shake - dt);
   for (let i = walls.length - 1; i >= 0; i--)
@@ -94,264 +95,10 @@ function update(dt) {
       }
   }
   G.clouds = G.clouds.filter((c) => c.t > 0);
-  // 玩家
-  if (!p.dead) {
-    let dx =
-        (keys.d || keys.arrowright ? 1 : 0) -
-        (keys.a || keys.arrowleft ? 1 : 0) +
-        stick.l.dx,
-      dy =
-        (keys.s || keys.arrowdown ? 1 : 0) -
-        (keys.w || keys.arrowup ? 1 : 0) +
-        stick.l.dy;
-    move(
-      p,
-      dx,
-      dy,
-      dt,
-      p.c.sp *
-        (p.haste > 0 ? 1.5 : 1) *
-        mySpdMul() *
-        (p.slow > 0 ? 0.5 : 1),
-    );
-    let aiming = false,
-      fire = false;
-    if (stick.r.on || stick.r.id !== null) {
-      if (Math.hypot(stick.r.dx, stick.r.dy) > 0.2) {
-        p.ang = Math.atan2(stick.r.dy, stick.r.dx);
-        aiming = true;
-        fire = true;
-      }
-    } else if (mouse.down || keys.j) {
-      p.ang = Math.atan2(
-        (mouse.y - vh / 2) / sc +
-          G.cam.y -
-          p.y +
-          vh / 2 / sc -
-          vh / 2 / sc,
-        (mouse.x - vw / 2) / sc +
-          G.cam.x -
-          p.x +
-          vw / 2 / sc -
-          vw / 2 / sc,
-      );
-      fire = true;
-    }
-    p.cd -= dt;
-    if (fire && p.cd <= 0 && kickBall(p, p.ang)) p.cd = 0.45;
-    else if (fire && p.cd <= 0) {
-      p.aimD =
-        stick.r.id !== null
-          ? 70 + Math.min(1, Math.hypot(stick.r.dx, stick.r.dy)) * 180
-          : Math.min(
-              240,
-              Math.hypot(
-                (mouse.x - vw / 2) / sc + G.cam.x - p.x,
-                (mouse.y - vh / 2) / sc + G.cam.y - p.y,
-              ),
-            );
-      shoot(p, p.ang, 0);
-      p.cd = p.c.cd * (p.rapid > 0 ? 0.35 : 1) * Math.pow(0.92, up.rate);
-      p.sup = Math.min(100, p.sup + 8 * myChgMul());
-    }
-    if (superReq && p.sup >= 100) {
-      const nt = G.ents
-        .filter((o) => o.tm !== p.tm && !o.dead)
-        .sort(
-          (a, b) =>
-            Math.hypot(a.x - p.x, a.y - p.y) -
-            Math.hypot(b.x - p.x, b.y - p.y),
-        )[0];
-      if (nt && stick.r.id === null && !mouse.down) {
-        p.ang = Math.atan2(nt.y - p.y, nt.x - p.x);
-        p.aimD = Math.min(240, Math.hypot(nt.x - p.x, nt.y - p.y));
-      }
-      shoot(p, p.ang, 1);
-      p.sup = 0;
-    }
-    if (abReq) useAbility(p);
-    abReq = false;
-    if (rollReq) doRoll(p, dx, dy);
-    rollReq = false;
-    superReq = false;
-    stick.r.sup = false;
-  } else {
-    p.dead -= dt;
-    if (p.dead <= 0) {
-      p.dead = 0;
-      p.hp = p.max;
-      p.x = p.sx;
-      p.y = p.sy;
-    }
-  }
-  // 電腦
-  for (let i = 1; i < G.ents.length; i++) {
-    const e = G.ents[i];
-    if (e.dead) {
-      e.dead -= dt;
-      if (e.dead <= 0) {
-        e.dead = 0;
-        e.hp = e.max;
-        e.x = e.sx;
-        e.y = e.sy;
-      }
-      continue;
-    }
-    e.hitT = Math.max(0, e.hitT - dt);
-    e.cd -= dt;
-    e.ai.t -= dt;
-    let tgt = null,
-      bd = Math.max(320, e.c.rng + 20);
-    for (const o of G.ents) {
-      if (o.tm === e.tm || o.dead) continue;
-      const d = Math.hypot(o.x - e.x, o.y - e.y);
-      if (d < bd && seen(e, o)) {
-        bd = d;
-        tgt = o;
-      }
-    }
-    if (!tgt) {
-      for (const t of G.turrets) {
-        if (G.ents[t.o].tm === e.tm) continue;
-        const d = Math.hypot(t.x - e.x, t.y - e.y);
-        if (d < Math.min(bd, 300)) {
-          bd = d;
-          tgt = {
-            x: t.x,
-            y: t.y,
-            r: 12,
-            hp: t.hp,
-            max: t.max,
-            tm: 1 - e.tm,
-            isT: 1,
-          };
-        }
-      }
-    }
-    let gem = null,
-      gd = 1e9;
-    for (const g of G.gems) {
-      const d = Math.hypot(g.x - e.x, g.y - e.y);
-      if (d < gd) {
-        gd = d;
-        gem = g;
-      }
-    }
-    if (e.ai.t <= 0) {
-      e.ai.t = 0.2 + Math.random() * 0.2;
-      if (e.hp < 35 && tgt) {
-        const a = Math.atan2(e.y - tgt.y, e.x - tgt.x);
-        e.ai.tx = e.x + Math.cos(a) * 200;
-        e.ai.ty = e.y + Math.sin(a) * 200;
-      } else if (1) {
-        const bl = G.ball,
-          gx = e.tm ? 0 : W,
-          own = e.tm ? W : 0,
-          dB = Math.hypot(bl.x - e.x, bl.y - e.y),
-          cl = G.ents.filter(
-            (o) =>
-              o.tm === e.tm &&
-              !o.dead &&
-              o !== e &&
-              Math.hypot(bl.x - o.x, bl.y - o.y) < dB,
-          ).length,
-          gk = e.role === 0 && Math.abs(bl.x - own) > 380,
-          df = e.role === 1 && Math.abs(bl.x - own) > 650 && dB > 260,
-          fw = e.role === 3 && cl >= 1 && Math.abs(bl.x - own) < 620;
-        if (gk) {
-          e.ai.tx = own + (e.tm ? -120 : 120);
-          e.ai.ty = H / 2 + (bl.y - H / 2) * 0.45;
-        } else if (df) {
-          e.ai.tx = own + (e.tm ? -340 : 340);
-          e.ai.ty = H / 2 + (bl.y - H / 2) * 0.5;
-        } else if (fw) {
-          e.ai.tx = gx + (e.tm ? 380 : -380);
-          e.ai.ty = H / 2 + (e.id % 2 ? 1 : -1) * 150;
-        } else if (cl >= 2) {
-          e.ai.tx = bl.x + (gx > bl.x ? 150 : -150);
-          e.ai.ty = H / 2 + (e.role - 1.5) * 170;
-        } else if (dB < e.r + bl.r + 14) {
-          e.ai.tx = gx;
-          e.ai.ty = H / 2;
-        } else {
-          const dg = Math.atan2(H / 2 - bl.y, gx - bl.x);
-          e.ai.tx = bl.x - Math.cos(dg) * 32;
-          e.ai.ty = bl.y - Math.sin(dg) * 32;
-        }
-        e.ai.tx = Math.max(100, Math.min(W - 100, e.ai.tx));
-        e.ai.ty = Math.max(100, Math.min(H - 100, e.ai.ty));
-      } else if (tgt && bd > e.c.keep) {
-        e.ai.tx = tgt.x + (Math.random() - 0.5) * 100;
-        e.ai.ty = tgt.y + (Math.random() - 0.5) * 100;
-      } else if (tgt) {
-        const a = Math.random() * 6.28;
-        e.ai.tx = e.x + Math.cos(a) * 120;
-        e.ai.ty = e.y + Math.sin(a) * 120;
-      } else {
-        e.ai.tx = T * 3 + Math.random() * (W - T * 6);
-        e.ai.ty = T * 3 + Math.random() * (H - T * 6);
-      }
-    }
-    {
-      const bl2 = G.ball,
-        gx2 = e.tm ? 0 : W;
-      if (
-        e.cd <= 0 &&
-        Math.hypot(bl2.x - e.x, bl2.y - e.y) < e.r + bl2.r + 26
-      ) {
-        const ka = Math.atan2(
-          H / 2 + (Math.random() - 0.5) * 110 - bl2.y,
-          gx2 - bl2.x,
-        );
-        e.ang = ka;
-        if (kickBall(e, ka)) e.cd = 0.6;
-      }
-    }
-    move(
-      e,
-      e.ai.tx - e.x,
-      e.ai.ty - e.y,
-      dt,
-      (e.c.sp - 30) * (e.haste > 0 ? 1.5 : 1) * (e.slow > 0 ? 0.5 : 1),
-    );
-    if (tgt) {
-      e.ang =
-        Math.atan2(tgt.y - e.y, tgt.x - e.x) +
-        (Math.random() - 0.5) * 0.25;
-      if (!(e.rcd > 0) && e.hp < e.max * 0.5 && bd < 220)
-        doRoll(e, e.x - tgt.x, e.y - tgt.y);
-      if (!(e.acd > 0)) {
-        const k = e.c.k;
-        if (
-          (k === "gun" && bd < 260) ||
-          (k === "tank" && bd < 220) ||
-          (k === "snipe" && bd < 400) ||
-          (k === "bomb" && bd < 200) ||
-          (k === "mage" && bd > 170) ||
-          (k === "dash" && bd < 300) ||
-          (k === "eng" && bd < 320) ||
-          (k === "toxic" && bd < 130) ||
-          (k === "wall" && bd < 260) ||
-          (k === "frost" && bd < 200) ||
-          (k === "brute" && bd < 220) ||
-          (k === "bat" && bd < 260) ||
-          (k === "cactus" && bd < 260) ||
-          (k === "bloom" && bd < 320)
-        )
-          useAbility(e);
-      }
-      if (e.cd <= 0 && bd < e.c.rng) {
-        e.aimD = bd;
-        if (e.sup >= 100 && bd < e.c.rng * 0.9) {
-          shoot(e, e.ang, 1);
-          e.sup = 0;
-        } else {
-          shoot(e, e.ang, 0);
-          e.sup += 8;
-        }
-        e.cd = e.c.cd * (e.rapid > 0 ? 0.5 : 1.5) + Math.random() * 0.3;
-      }
-    }
+  // 角色:依 G.ents 順序,真人照輸入、電腦照 AI
+  for (const e of G.ents) {
+    if (e.ctrl === "human") stepHuman(e, inputs[e.pid] || NO_INPUT, dt);
+    else stepAI(e, dt);
   }
   // 子彈
   for (const b of G.bul) {
@@ -404,7 +151,7 @@ function update(dt) {
         if (o && !b.sup)
           o.sup = Math.min(
             100,
-            o.sup + 10 * (o.id === 0 ? myChgMul() : 1),
+            o.sup + 10 * o.mods.chg,
           );
         G.parts.push({ x: b.x, y: b.y, t: 0.25, txt: b.d, hit: 1 });
       }
@@ -526,13 +273,13 @@ function update(dt) {
   for (const e of G.ents) {
     if (!e.dead && e.hp < e.max) {
       e.regen = (e.regen || 0) + dt;
-      const charm = e.id === 0 && accVal("charm");
+      const charm = e.mods.charm;
       if (e.hitT <= 0 && e.regen > (charm ? 2 : 4))
         e.hp = Math.min(e.max, e.hp + (charm ? 40 : 25) * dt);
     }
     if (e.hitT > 0) e.regen = 0;
   }
-  p.hitT = Math.max(0, p.hitT - dt);
+  for (const e of G.ents) if (e.ctrl === "human") e.hitT = Math.max(0, e.hitT - dt);
   {
     const bl = G.ball;
     if (G.goalT > 0) {
@@ -590,8 +337,234 @@ function update(dt) {
   // 結束:結算交給 rewards.js(比賽獎勵 → 數學挑戰)
   if (G.t <= 0 || G.score[0] >= 3 || G.score[1] >= 3) {
     G.over = true;
-    const sm = G.score[G.ents[0].tm],
-      so = G.score[1 - G.ents[0].tm];
+    const me = G.ents[G.me],
+      sm = G.score[me.tm],
+      so = G.score[1 - me.tm];
     onMatchEnd(sm > so ? "win" : sm === so ? "tie" : "lose");
+  }
+}
+
+// 真人角色一幀:移動、瞄準、攻擊/踢球、大招、超能力、翻滾、重生
+function stepHuman(p, inp, dt) {
+  if (!p.dead) {
+    const dx = inp.mx,
+      dy = inp.my;
+    move(
+      p,
+      dx,
+      dy,
+      dt,
+      p.c.sp *
+        (p.haste > 0 ? 1.5 : 1) *
+        p.mods.spd *
+        (p.slow > 0 ? 0.5 : 1),
+    );
+    const fire = inp.fire,
+      mouseAim = inp.tx !== null && inp.tx !== undefined;
+    if (fire) p.ang = mouseAim ? Math.atan2(inp.ty - p.y, inp.tx - p.x) : inp.aim;
+    p.cd -= dt;
+    if (fire && p.cd <= 0 && kickBall(p, p.ang)) p.cd = 0.45;
+    else if (fire && p.cd <= 0) {
+      p.aimD = mouseAim
+        ? Math.min(240, Math.hypot(inp.tx - p.x, inp.ty - p.y))
+        : inp.aimD;
+      shoot(p, p.ang, 0);
+      p.cd = p.c.cd * (p.rapid > 0 ? 0.35 : 1) * p.mods.rate;
+      p.sup = Math.min(100, p.sup + 8 * p.mods.chg);
+    }
+    if (inp.sup && p.sup >= 100) {
+      const nt = G.ents
+        .filter((o) => o.tm !== p.tm && !o.dead)
+        .sort(
+          (a, b) =>
+            Math.hypot(a.x - p.x, a.y - p.y) -
+            Math.hypot(b.x - p.x, b.y - p.y),
+        )[0];
+      if (nt && inp.autoAim) {
+        p.ang = Math.atan2(nt.y - p.y, nt.x - p.x);
+        p.aimD = Math.min(240, Math.hypot(nt.x - p.x, nt.y - p.y));
+      }
+      shoot(p, p.ang, 1);
+      p.sup = 0;
+    }
+    if (inp.ab) useAbility(p);
+    if (inp.roll) doRoll(p, dx, dy);
+  } else {
+    p.dead -= dt;
+    if (p.dead <= 0) {
+      p.dead = 0;
+      p.hp = p.max;
+      p.x = p.sx;
+      p.y = p.sy;
+    }
+  }
+}
+
+// 電腦角色一幀:找目標、依位置職責跑位、踢球、放技能、射擊
+function stepAI(e, dt) {
+  if (e.dead) {
+    e.dead -= dt;
+    if (e.dead <= 0) {
+      e.dead = 0;
+      e.hp = e.max;
+      e.x = e.sx;
+      e.y = e.sy;
+    }
+    return;
+  }
+  e.hitT = Math.max(0, e.hitT - dt);
+  e.cd -= dt;
+  e.ai.t -= dt;
+  let tgt = null,
+    bd = Math.max(320, e.c.rng + 20);
+  for (const o of G.ents) {
+    if (o.tm === e.tm || o.dead) continue;
+    const d = Math.hypot(o.x - e.x, o.y - e.y);
+    if (d < bd && seen(e, o)) {
+      bd = d;
+      tgt = o;
+    }
+  }
+  if (!tgt) {
+    for (const t of G.turrets) {
+      if (G.ents[t.o].tm === e.tm) continue;
+      const d = Math.hypot(t.x - e.x, t.y - e.y);
+      if (d < Math.min(bd, 300)) {
+        bd = d;
+        tgt = {
+          x: t.x,
+          y: t.y,
+          r: 12,
+          hp: t.hp,
+          max: t.max,
+          tm: 1 - e.tm,
+          isT: 1,
+        };
+      }
+    }
+  }
+  let gem = null,
+    gd = 1e9;
+  for (const g of G.gems) {
+    const d = Math.hypot(g.x - e.x, g.y - e.y);
+    if (d < gd) {
+      gd = d;
+      gem = g;
+    }
+  }
+  if (e.ai.t <= 0) {
+    e.ai.t = 0.2 + Math.random() * 0.2;
+    if (e.hp < 35 && tgt) {
+      const a = Math.atan2(e.y - tgt.y, e.x - tgt.x);
+      e.ai.tx = e.x + Math.cos(a) * 200;
+      e.ai.ty = e.y + Math.sin(a) * 200;
+    } else if (1) {
+      const bl = G.ball,
+        gx = e.tm ? 0 : W,
+        own = e.tm ? W : 0,
+        dB = Math.hypot(bl.x - e.x, bl.y - e.y),
+        cl = G.ents.filter(
+          (o) =>
+            o.tm === e.tm &&
+            !o.dead &&
+            o !== e &&
+            Math.hypot(bl.x - o.x, bl.y - o.y) < dB,
+        ).length,
+        gk = e.role === 0 && Math.abs(bl.x - own) > 380,
+        df = e.role === 1 && Math.abs(bl.x - own) > 650 && dB > 260,
+        fw = e.role === 3 && cl >= 1 && Math.abs(bl.x - own) < 620;
+      if (gk) {
+        e.ai.tx = own + (e.tm ? -120 : 120);
+        e.ai.ty = H / 2 + (bl.y - H / 2) * 0.45;
+      } else if (df) {
+        e.ai.tx = own + (e.tm ? -340 : 340);
+        e.ai.ty = H / 2 + (bl.y - H / 2) * 0.5;
+      } else if (fw) {
+        e.ai.tx = gx + (e.tm ? 380 : -380);
+        e.ai.ty = H / 2 + (e.id % 2 ? 1 : -1) * 150;
+      } else if (cl >= 2) {
+        e.ai.tx = bl.x + (gx > bl.x ? 150 : -150);
+        e.ai.ty = H / 2 + (e.role - 1.5) * 170;
+      } else if (dB < e.r + bl.r + 14) {
+        e.ai.tx = gx;
+        e.ai.ty = H / 2;
+      } else {
+        const dg = Math.atan2(H / 2 - bl.y, gx - bl.x);
+        e.ai.tx = bl.x - Math.cos(dg) * 32;
+        e.ai.ty = bl.y - Math.sin(dg) * 32;
+      }
+      e.ai.tx = Math.max(100, Math.min(W - 100, e.ai.tx));
+      e.ai.ty = Math.max(100, Math.min(H - 100, e.ai.ty));
+    } else if (tgt && bd > e.c.keep) {
+      e.ai.tx = tgt.x + (Math.random() - 0.5) * 100;
+      e.ai.ty = tgt.y + (Math.random() - 0.5) * 100;
+    } else if (tgt) {
+      const a = Math.random() * 6.28;
+      e.ai.tx = e.x + Math.cos(a) * 120;
+      e.ai.ty = e.y + Math.sin(a) * 120;
+    } else {
+      e.ai.tx = T * 3 + Math.random() * (W - T * 6);
+      e.ai.ty = T * 3 + Math.random() * (H - T * 6);
+    }
+  }
+  {
+    const bl2 = G.ball,
+      gx2 = e.tm ? 0 : W;
+    if (
+      e.cd <= 0 &&
+      Math.hypot(bl2.x - e.x, bl2.y - e.y) < e.r + bl2.r + 26
+    ) {
+      const ka = Math.atan2(
+        H / 2 + (Math.random() - 0.5) * 110 - bl2.y,
+        gx2 - bl2.x,
+      );
+      e.ang = ka;
+      if (kickBall(e, ka)) e.cd = 0.6;
+    }
+  }
+  move(
+    e,
+    e.ai.tx - e.x,
+    e.ai.ty - e.y,
+    dt,
+    (e.c.sp - 30) * (e.haste > 0 ? 1.5 : 1) * (e.slow > 0 ? 0.5 : 1),
+  );
+  if (tgt) {
+    e.ang =
+      Math.atan2(tgt.y - e.y, tgt.x - e.x) +
+      (Math.random() - 0.5) * 0.25;
+    if (!(e.rcd > 0) && e.hp < e.max * 0.5 && bd < 220)
+      doRoll(e, e.x - tgt.x, e.y - tgt.y);
+    if (!(e.acd > 0)) {
+      const k = e.c.k;
+      if (
+        (k === "gun" && bd < 260) ||
+        (k === "tank" && bd < 220) ||
+        (k === "snipe" && bd < 400) ||
+        (k === "bomb" && bd < 200) ||
+        (k === "mage" && bd > 170) ||
+        (k === "dash" && bd < 300) ||
+        (k === "eng" && bd < 320) ||
+        (k === "toxic" && bd < 130) ||
+        (k === "wall" && bd < 260) ||
+        (k === "frost" && bd < 200) ||
+        (k === "brute" && bd < 220) ||
+        (k === "bat" && bd < 260) ||
+        (k === "cactus" && bd < 260) ||
+        (k === "bloom" && bd < 320)
+      )
+        useAbility(e);
+    }
+    if (e.cd <= 0 && bd < e.c.rng) {
+      e.aimD = bd;
+      if (e.sup >= 100 && bd < e.c.rng * 0.9) {
+        shoot(e, e.ang, 1);
+        e.sup = 0;
+      } else {
+        shoot(e, e.ang, 0);
+        e.sup += 8;
+      }
+      e.cd = e.c.cd * (e.rapid > 0 ? 0.5 : 1.5) + Math.random() * 0.3;
+    }
   }
 }

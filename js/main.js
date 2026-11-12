@@ -8,7 +8,12 @@ function loop(ts) {
       drawHome(ts);
       if (detailOn) drawDetail(ts);
     } else {
-      if (G && !G.over && ui.style.display === "none") update(dt);
+      if (G && !G.over && ui.style.display === "none") {
+        if (Net.isHost()) {
+          update(dt, Net.collectInputs());
+          Net.publish(G);
+        } else Net.sendInput(readLocalInput());
+      }
       if (G) draw();
     }
   } catch (err) {

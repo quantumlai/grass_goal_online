@@ -417,7 +417,7 @@ function mFinish() {
     "<b>" + M.right + "</b><small>答對題數(共作答 " + M.total + " 題)</small>";
   mresScr.querySelector("h2").textContent = M.practice ? "📝 練習結束" : "⏰ 時間到!";
   const rows = M.practice
-    ? [["📝 練習模式", "沒有獎勵,也不會記錄成績"]]
+    ? [["📝 練習模式", "雖然沒有獎勵，但你超棒！"]]
     : [["💰 答題金幣", "+" + base]];
   if (M.dbl) rows.push(["🃏 雙倍卡 ×2", "+" + base]);
   if (!M.practice)

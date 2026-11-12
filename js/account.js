@@ -179,18 +179,18 @@ aEl("aForm").onsubmit = async (ev) => {
   }
   ["aPw", "aPw2"].forEach((id) => (aEl(id).value = ""));
   btn.disabled = !llReady();
-  // 名稱要登入後才能設定;先記下來,登入時(現在或驗證 Email 之後)再設
+  // 名稱要登入後才能設定;先記下來,登入成功時再設
   setPendingName(email, name);
   try {
     await doLogin(email, pw);
     view("aMe");
-    setMsg("aMeMsg", "✅ 帳號建立成功!記得到信箱完成 Email 驗證。", "ok");
+    setMsg("aMeMsg", "✅ 帳號建立成功!", "ok"); // LootLocker 後台沒有開 Email 驗證,不用收信
   } catch (e) {
-    // 後台設定「Email 驗證後才能登入」時會走到這裡
+    // 帳號建好了但自動登入失敗(例如網路斷掉):請他自己登入一次
     aEl("aDoneBody").innerHTML =
       "<p>帳號:<b>" +
       escHtml(email) +
-      "</b></p><p>📧 我們寄了一封驗證信到這個信箱,請打開信件完成驗證,再回來登入。</p>" +
+      "</b></p><p>請用剛剛的 Email 和密碼登入。</p>" +
       (name ? "<p>名稱「" + escHtml(name) + "」會在第一次登入時設定。</p>" : "");
     aEl("aLEmail").value = email;
     view("aDone");

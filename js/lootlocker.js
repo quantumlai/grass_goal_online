@@ -38,7 +38,7 @@ const wlHeaders = () => ({
   "is-development": String(LL.isDevelopment),
 });
 
-// 建立帳號(建立後 LootLocker 會寄驗證信)
+// 建立帳號(目前後台沒有開 Email 驗證,建立後就能直接登入)
 const llSignUp = (email, password) =>
   llFetch("white-label-login/sign-up", { headers: wlHeaders(), body: { email, password } });
 // 忘記密碼:LootLocker 會寄出重設密碼的信,使用者在 LootLocker 的網頁設定新密碼(成功回傳 204)

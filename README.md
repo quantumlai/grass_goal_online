@@ -317,7 +317,7 @@
 
 正式環境那個遊戲的後台，也要另外做一次跟開發環境一樣的設定：
 
-1. 開啟 **White Label Login**，並設定驗證信的寄件資訊。（✅ 已確認開啟）
+1. 開啟 **White Label Login**。（✅ 已確認開啟；目前**沒有開 Email 驗證**，建立帳號後直接登入）
 2. 建立並發佈貨幣 `CIN`、`PPT`，開啟 Game API writes。
 3. 建立排行榜 `grass_goal_online_math`、`grass_goal_online_wins`，設定同開發環境。
 
@@ -337,7 +337,7 @@
 | 忘記密碼 | 見下一節 |
 | 我的帳號 | 顯示名稱和 Email，可以返回首頁、重設密碼或登出 |
 
-**名稱：** 名稱要登入後才能設定（`PATCH game/player/name`）。註冊時填的名稱會先記在裝置上，登入成功時才設定，所以就算要先驗證 Email，名稱也不會遺失。
+**名稱：** 名稱要登入後才能設定（`PATCH game/player/name`）。註冊時填的名稱會先記在裝置上，登入成功時才設定，所以就算自動登入失敗（例如網路斷掉），名稱也不會遺失。
 
 **自動登入：** 重新打開網頁時，會用記住的 token 呼叫 `white-label-login/verify-session` 確認還有效，再開新的遊戲 session。token 失效就自動登出；連不上網路則先保留登入狀態。
 
@@ -354,7 +354,7 @@
 
 這台裝置只會記住 Email、名稱、玩家 ID 和 LootLocker 發的登入 token（存在 `localStorage` 的 `brawlAccount_<環境>`），**不會**記住密碼。開發環境和正式環境的登入狀態分開存。所有 LootLocker 請求都有 15 秒逾時。
 
-**LootLocker 後台需要先做的設定：** 到後台啟用 **White Label Login** 平台，並設定驗證信的寄件資訊。還沒啟用之前，API 會回傳 `platform is not enabled`，畫面上會顯示「帳號功能還沒開通」。
+**LootLocker 後台需要先做的設定：** 到後台啟用 **White Label Login** 平台。目前沒有開 Email 驗證，所以畫面不會提示去收驗證信；如果之後要開，記得把建立帳號後的提示改回來（[js/account.js](js/account.js)）。還沒啟用之前，API 會回傳 `platform is not enabled`，畫面上會顯示「帳號功能還沒開通」。
 
 ## 專案結構
 

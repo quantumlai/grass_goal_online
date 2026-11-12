@@ -20,14 +20,14 @@ const UNLOCKS = [
     k: "room",
     els: ["hRoom"],
     need: () => P.played >= 5 || P.roomUsed, // 用過邀請連結進房間的也算
-    hint: "👥 好友房間開放了!可以找朋友一起玩。",
+    hint: "👥 好友房間開放了!打開「☰ 選單」就能找朋友一起玩。",
     btn: "hRoom",
   },
   {
     k: "acct",
     els: ["hAcct"],
     need: () => P.played >= 5 || !!acct, // 已經登入的人一直顯示
-    hint: "👤 可以建立帳號,把金幣和成績存起來。",
+    hint: "👤 「☰ 選單」裡可以建立帳號,把金幣和成績存起來。",
     btn: "hAcct",
   },
 ];
@@ -59,6 +59,9 @@ function updUnlocks() {
     document.getElementById(u.btn).classList.toggle("new", fresh);
     if (fresh && !hint) hint = u.hint;
   }
+  // 選單裡有新功能:選單按鈕也顯示 NEW
+  const inMenu = UNLOCKS.filter((u) => ["hRoom", "hAcct"].includes(u.btn));
+  document.getElementById("hMenu").classList.toggle("new", inMenu.some((u) => u.need() && !P.seen[u.k]));
   const el = document.getElementById("hNew");
   el.textContent = hint;
   el.style.display = hint ? "" : "none";

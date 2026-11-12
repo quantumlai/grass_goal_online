@@ -29,6 +29,7 @@ function updHome() {
     "</small>";
   // 還沒練習過:練習按鈕閃爍提醒
   document.getElementById("hTut").classList.toggle("hint", !P.tutDone);
+  document.getElementById("hMenu").classList.toggle("hint", !P.tutDone); // 練習在選單裡,選單按鈕也閃
   if (typeof updUnlocks === "function") updUnlocks(); // 功能慢慢解鎖(onboarding.js)
   const pl = document.getElementById("play");
   pl.textContent = P.mathPending ? "📝 先做數學" : "出擊!";

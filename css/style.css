@@ -1062,11 +1062,6 @@ button:focus-visible {
 }
 
 /* ===== 帳號 ===== */
-.hacct {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 #hAcct {
   font-size: 14px;
   padding: 5px 14px;
@@ -1680,27 +1675,10 @@ button.link {
 }
 
 /* ===== 首頁:練習與好友房間 ===== */
-.hrow2 {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  justify-content: center;
-  pointer-events: auto;
-}
-.hrow2 button {
-  font-size: 14px;
-  padding: 6px 12px;
-}
 #hTut.hint {
   background: var(--accent);
   color: #3a2a00;
   animation: pulse 1.2s ease-in-out infinite;
-}
-@media (max-height: 520px) {
-  .hrow2 button {
-    font-size: 12px;
-    padding: 3px 10px;
-  }
 }
 @media (prefers-reduced-motion: reduce) {
   #hTut.hint {
@@ -1895,13 +1873,13 @@ button.link {
 }
 
 /* ===== 功能慢慢解鎖(onboarding.js) ===== */
-#home .locked {
-  display: none !important;
+.locked {
+  display: none !important; /* 首頁和選單裡還沒解鎖的功能 */
 }
-#home button.new {
+button.new {
   position: relative;
 }
-#home button.new::after {
+button.new::after {
   content: "NEW";
   position: absolute;
   top: -8px;
@@ -1939,10 +1917,6 @@ button.link {
 }
 
 /* ===== 音效開關 ===== */
-#hSound {
-  font-size: 14px;
-  padding: 5px 12px;
-}
 #sndBtn {
   position: fixed;
   top: calc(env(safe-area-inset-top, 0px) + 46px);
@@ -1957,9 +1931,155 @@ button.link {
 #emoBtn {
   right: 64px;
 }
+
+/* ===== 首頁的選單(menu.js) ===== */
+#hMenu {
+  font-size: 15px;
+  padding: 6px 18px;
+}
+#hMenu.hint {
+  background: var(--accent);
+  color: #3a2a00;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+#menu {
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+  align-items: flex-start; /* 搭配 .mpanel 的 margin: auto 置中;內容比螢幕高時頂端不會被切掉 */
+  justify-content: center;
+  padding: 16px;
+  background: rgba(10, 12, 40, 0.7);
+  overflow-y: auto;
+  touch-action: pan-y;
+}
+.mpanel {
+  margin: auto;
+  width: min(360px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #4a2a8f, #1d1f6e);
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+.mhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 20px;
+}
+.mhead button {
+  font-size: 14px;
+  padding: 4px 10px;
+}
+.mitem {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  font-size: 18px;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.3);
+  color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  box-shadow: none;
+}
+.mitem small {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.75;
+}
+.mitem.hint {
+  background: var(--accent);
+  color: #3a2a00;
+  animation: none;
+}
+/* 開關 */
+.mtoggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.mtoggle input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.mtoggle i {
+  position: relative;
+  width: 52px;
+  height: 30px;
+  border-radius: 999px;
+  background: #555;
+  transition: background 0.2s;
+}
+.mtoggle i::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  transition: left 0.2s;
+}
+.mtoggle input:checked + i {
+  background: #4ade80;
+}
+.mtoggle input:checked + i::after {
+  left: 25px;
+}
+.mtoggle input:focus-visible + i {
+  outline: 3px solid #fff;
+}
 @media (max-height: 520px) {
-  #hSound {
-    font-size: 12px;
-    padding: 3px 10px;
+  .mpanel {
+    gap: 5px;
+    padding: 10px;
+  }
+  .mitem {
+    font-size: 15px;
+    padding: 6px 12px;
+  }
+  .mitem small {
+    font-size: 11px;
+  }
+  #hMenu {
+    font-size: 13px;
+    padding: 3px 14px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #hMenu.hint {
+    animation: none;
+  }
+}
+/* 選單裡的「遊戲練習」提醒只變色,不放大(首頁按鈕的放大動畫會超出選單) */
+#menu #hTut.hint {
+  animation: none;
+  transform: none;
+}
+/* 橫式手機:選單排成兩欄,不用捲動 */
+@media (max-height: 520px) and (orientation: landscape) {
+  .mpanel {
+    width: min(600px, 100%);
+  }
+  #mnMain {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  #mnMain .mhead {
+    grid-column: 1 / -1;
   }
 }

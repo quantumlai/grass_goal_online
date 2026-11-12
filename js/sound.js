@@ -40,7 +40,14 @@ function sfxInit() {
 }
 // 第一次觸控或點擊時啟動音效(iPhone 一定要這樣)
 ["pointerdown", "touchstart", "keydown"].forEach((ev) =>
-  addEventListener(ev, sfxInit, { passive: true }),
+  addEventListener(
+    ev,
+    () => {
+      sfxInit();
+      if (typeof musicTick === "function") musicTick();
+    },
+    { passive: true },
+  ),
 );
 
 // ── 合成用的小工具 ──
@@ -137,32 +144,87 @@ function sfxPlay(k, x, y) {
   } catch (e) {}
 }
 
-// ── 開關按鈕(首頁、比賽中) ──
-function sndUI() {
-  const t = soundOn() ? "🔊" : "🔇",
-    label = soundOn() ? "關閉音效" : "開啟音效";
-  for (const id of ["hSound", "sndBtn"]) {
-    const b = document.getElementById(id);
-    b.textContent = id === "hSound" ? t + " 音效" : t;
-    b.setAttribute("aria-label", label);
+// ── 背景音樂 ──
+// 數學挑戰、數學練習時播 math_puzzles.mp3,其他時候播 game.mp3,都循環播放。
+// 用 <audio> 播放;網址是 http(s) 時再接到 Web Audio 調音量(iPhone 不能直接改 <audio> 的音量)。
+const MUSIC = {
+  tracks: { game: "assets/music/game.mp3", math: "assets/music/math_puzzles.mp3" },
+  vol: 0.35, // 比音效小聲,不會蓋過音效
+  els: {}, // 已載入的曲子(用到才下載)
+  cur: null, // 正在播哪一首
+};
+const musicOn = () => P.music !== false;
+function musicEl(k) {
+  if (MUSIC.els[k]) return MUSIC.els[k];
+  const a = new Audio(MUSIC.tracks[k]);
+  a.loop = true;
+  a.preload = "auto";
+  a.volume = MUSIC.vol;
+  // 接到 Web Audio 才能在 iPhone 上調音量;直接開檔案(file://)時接上去會沒聲音,所以跳過
+  if (SFX.ctx && location.protocol !== "file:") {
+    try {
+      const g = SFX.ctx.createGain();
+      g.gain.value = MUSIC.vol;
+      SFX.ctx.createMediaElementSource(a).connect(g).connect(SFX.ctx.destination);
+      a.volume = 1;
+    } catch (e) {}
   }
+  MUSIC.els[k] = a;
+  return a;
 }
-// 比賽中才顯示右上角的音效按鈕(練習有自己的面板,不顯示)。每一幀呼叫,狀態有變才改畫面
+// 每一幀呼叫:決定現在該播哪一首,有變才切換
+function musicTick() {
+  const want =
+    !musicOn() || !SFX.ctx || document.hidden
+      ? null
+      : mathScr.style.display !== "none" || mresScr.style.display !== "none"
+        ? "math"
+        : "game";
+  if (want === MUSIC.cur) return;
+  if (MUSIC.cur) MUSIC.els[MUSIC.cur].pause();
+  MUSIC.cur = want;
+  if (!want) return;
+  const a = musicEl(want);
+  a.currentTime = 0;
+  const p = a.play();
+  if (p && p.catch) p.catch(() => (MUSIC.cur = null)); // 瀏覽器還不讓播,下次點擊後再試
+}
+addEventListener("visibilitychange", musicTick); // 切到別的 App 時暫停
+
+// ── 開關:設定頁(音樂、音效分開)、比賽中的全部靜音 ──
+function sndUI() {
+  const any = soundOn() || musicOn();
+  const b = document.getElementById("sndBtn");
+  b.textContent = any ? "🔊" : "🔇";
+  b.setAttribute("aria-label", any ? "全部靜音" : "打開聲音");
+  document.getElementById("setMusic").checked = musicOn();
+  document.getElementById("setSfx").checked = soundOn();
+}
+// 比賽中才顯示右上角的靜音按鈕(練習有自己的面板,不顯示)。每一幀呼叫,狀態有變才改畫面
 let sndBtnShown = null;
 function sndBtnTick() {
   const show = !homeOn && !!G && !G.over && ui.style.display === "none" && !TUT.on;
-  if (show === sndBtnShown) return;
-  sndBtnShown = show;
-  document.getElementById("sndBtn").style.display = show ? "" : "none";
+  if (show !== sndBtnShown) {
+    sndBtnShown = show;
+    document.getElementById("sndBtn").style.display = show ? "" : "none";
+  }
+  musicTick();
 }
-function toggleSound(ev) {
-  if (ev) ev.stopPropagation();
-  P.sound = !soundOn();
+function setAudio(music, sfxOn) {
+  P.music = music;
+  P.sound = sfxOn;
   save();
   sfxInit();
-  if (soundOn()) sfxPlay("ding");
+  if (sfxOn) sfxPlay("ding");
   sndUI();
+  musicTick();
 }
-document.getElementById("hSound").onclick = toggleSound;
-document.getElementById("sndBtn").onclick = toggleSound;
+// 比賽中的按鈕:有任何聲音就全部關掉,全部關著就全部打開
+document.getElementById("sndBtn").onclick = (ev) => {
+  ev.stopPropagation();
+  const any = soundOn() || musicOn();
+  setAudio(!any, !any);
+};
+document.getElementById("setMusic").onchange = (ev) => setAudio(ev.target.checked, soundOn());
+document.getElementById("setSfx").onchange = (ev) => setAudio(musicOn(), ev.target.checked);
 sndUI();

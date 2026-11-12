@@ -5,6 +5,7 @@ function loop(ts) {
   last = ts;
   try {
     Net.tick(dt); // 連線:開賽、快照、結果、表情(單機版什麼都不做)
+    sndBtnTick(); // 比賽中的靜音按鈕、背景音樂換曲(sound.js)
     if (homeOn) {
       drawHome(ts);
       if (detailOn) drawDetail(ts);
@@ -16,7 +17,6 @@ function loop(ts) {
         } else Net.sendInput(readLocalInput());
       }
       tutTick(dt); // 遊戲練習的步驟判斷(tutorial.js)
-      sndBtnTick(); // 比賽中右上角的音效開關(sound.js)
       if (G) draw();
       drawTutHints();
     }

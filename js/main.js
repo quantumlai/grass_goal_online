@@ -16,6 +16,7 @@ function loop(ts) {
         } else Net.sendInput(readLocalInput());
       }
       tutTick(dt); // 遊戲練習的步驟判斷(tutorial.js)
+      sndBtnTick(); // 比賽中右上角的音效開關(sound.js)
       if (G) draw();
       drawTutHints();
     }

@@ -14,6 +14,7 @@ function B(e, a, o) {
 function shoot(e, ang, sup) {
   const k = e.c.k;
   e.invis = 0;
+  sfx(sup ? "super" : SHOT_SOUND[k] || "pew", e.x, e.y); // 音效(sound.js)
   if (sup) {
     G.parts.push({
       x: e.x,
@@ -294,6 +295,7 @@ function stepFx(e, dt) {
 }
 function useAbility(e) {
   if (e.acd > 0 || e.dead) return false;
+  sfx("ability", e.x, e.y);
   const k = e.c.k;
   if (k === "gun") {
     e.rapid = 5;
@@ -436,6 +438,7 @@ function useAbility(e) {
 }
 function doRoll(e, dx, dy) {
   if (e.rcd > 0 || e.dead || e.roll > 0) return;
+  sfx("roll", e.x, e.y);
   const m = Math.hypot(dx, dy);
   e.rollA = m > 0.1 ? Math.atan2(dy, dx) : e.ang;
   e.roll = 0.22;
@@ -453,6 +456,7 @@ function kickBall(e, ang) {
   bl.vy = Math.sin(ang) * ks;
   bl.last = e.id;
   G.parts.push({ x: bl.x, y: bl.y, t: 0.3, heal: 1, col: "#fff" });
+  sfx("kick", bl.x, bl.y);
   return true;
 }
 function pushBall(x, y, rad, f) {
@@ -492,6 +496,7 @@ function goal(tm) {
   G.goalMsg = "GOAL! " + (tm ? "紅" : "藍") + "隊得分";
   G.goalCol = tm ? "#ff6b6b" : "#6bb3ff";
   G.shake = 0.5;
+  sfx("goal"); // 不分遠近,全場都聽得到
 }
 function hurt(e, d, by) {
   if (e.dead || e.roll > 0) return;
@@ -502,6 +507,7 @@ function hurt(e, d, by) {
   d *= e.mods.def;
   e.hp -= d;
   e.hitT = 0.15;
+  sfx(e.hp <= 0 ? "ko" : "hit", e.x, e.y);
   if (e.hp <= 0) {
     e.dead = 3 * e.mods.resp;
     const n = e.gems;

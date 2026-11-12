@@ -11,7 +11,7 @@ addEventListener(
   "touchstart",
   (e) => {
     if (ui.style.display !== "none" || homeOn) return;
-    if (e.target.closest && e.target.closest("#emoBtn,#emoPanel,#tut button")) return; // 這些按鈕交給 DOM 處理
+    if (e.target.closest && e.target.closest("#emoBtn,#emoPanel,#sndBtn,#tut button")) return; // 這些按鈕交給 DOM 處理
     for (const t of e.changedTouches) {
       if (Math.hypot(t.clientX - HUD.sup[0], t.clientY - HUD.sup[1]) < 50) {
         superReq = true;
@@ -88,7 +88,7 @@ addEventListener("mousemove", (e) => {
   mouse.y = e.clientY;
 });
 addEventListener("mousedown", (e) => {
-  if (e.target.closest && e.target.closest("#emoBtn,#emoPanel,#tut button")) return;
+  if (e.target.closest && e.target.closest("#emoBtn,#emoPanel,#sndBtn,#tut button")) return;
   if (Math.hypot(e.clientX - HUD.sup[0], e.clientY - HUD.sup[1]) < 50) {
     superReq = true;
     return;

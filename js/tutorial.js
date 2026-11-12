@@ -122,6 +122,7 @@ function tutTick(dt) {
   }
   if (TUT_STEPS[TUT.step].done()) {
     TUT.wait = 1.2;
+    sfxPlay("ding");
     tutUI(true);
   }
 }

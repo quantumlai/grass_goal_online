@@ -1937,3 +1937,29 @@ button.link {
 .hbot {
   margin-bottom: 12px;
 }
+
+/* ===== 音效開關 ===== */
+#hSound {
+  font-size: 14px;
+  padding: 5px 12px;
+}
+#sndBtn {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 46px);
+  right: 12px;
+  z-index: 4;
+  font-size: 22px;
+  padding: 4px 9px;
+  background: rgba(0, 0, 0, 0.45);
+  box-shadow: none;
+}
+/* 好友房間的表情按鈕讓出位置,排在音效按鈕左邊 */
+#emoBtn {
+  right: 64px;
+}
+@media (max-height: 520px) {
+  #hSound {
+    font-size: 12px;
+    padding: 3px 10px;
+  }
+}

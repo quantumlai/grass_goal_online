@@ -32,6 +32,7 @@
         <div id="hNew" style="display: none"></div>
         <div class="hacct">
           <button id="hAcct" class="ch">👤 建立帳號</button
+          ><button id="hSound" class="ch">🔊 音效</button
           ><span id="envTag"></span>
         </div>
       </div>
@@ -218,6 +219,8 @@
     <div id="tut" style="display: none"></div>
     <!-- 比賽中的表情按鈕(只有好友房間會出現) -->
     <button id="emoBtn" style="display: none" aria-label="表情">😊</button>
+    <!-- 比賽中的音效開關(sound.js) -->
+    <button id="sndBtn" style="display: none" aria-label="關閉音效">🔊</button>
     <div id="emoPanel" class="emos" style="display: none"></div>
     <!-- 比賽結果:顯示比分與勝場獎勵,接著一定要做數學挑戰 -->
     <div id="ui" style="display: none">
@@ -286,6 +289,7 @@
     <script src="js/room.js"></script>
     <script src="js/tutorial.js"></script>
     <script src="js/onboarding.js"></script>
+    <script src="js/sound.js"></script>
     <script src="js/main.js"></script>
   </body>
 </html>

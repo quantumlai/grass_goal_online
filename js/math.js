@@ -358,6 +358,7 @@ function mSubmit() {
     M.streak++;
     if (!M.practice) M.coins += M.cur.c * (M.dbl ? 2 : 1);
     mDraw("ok");
+    sfxPlay(!M.practice && M.streak % CRIT_EVERY === 0 ? "crit" : "ding");
     if (M.practice) {
       fx.textContent = M.streak >= 3 ? "答對了!連續 " + M.streak + " 題 🔥" : "答對了!";
       fx.className = "ok";
@@ -373,6 +374,7 @@ function mSubmit() {
     setTimeout(() => M.on && mNext(), !M.practice && M.streak % CRIT_EVERY === 0 ? 900 : 450);
   } else {
     M.streak = 0;
+    sfxPlay("buzz");
     M.wrong.push({ q: M.cur.q, a: M.cur.a, you: M.typed });
     mDraw("bad");
     fx.innerHTML = "正確答案是 <b>" + M.cur.a + "</b>";

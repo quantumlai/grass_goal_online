@@ -43,6 +43,7 @@ function update(dt, inputs) {
           t.hit = 0.15;
         }
       G.parts.push({ x: m.x, y: m.y, t: 0.4, blast: 110 });
+      sfx("boom", m.x, m.y);
       G.shake = Math.max(G.shake, 0.1);
     }
   }
@@ -208,6 +209,7 @@ function update(dt, inputs) {
       const ow = G.ents[b.o];
       if (n && ow && !b.sup) ow.sup = Math.min(100, ow.sup + 12);
       G.parts.push({ x: b.x, y: b.y, t: 0.4, blast: b.aoe });
+      sfx("boom", b.x, b.y);
       if (rects(b.x, b.y, 20, [{ x: 0, y: 0, w: 0, h: 0 }])) 0;
     }
   for (const b of G.bul)

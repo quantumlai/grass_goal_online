@@ -137,6 +137,7 @@ function packSnap(G) {
   return {
     id: room.matchId,
     n: ++room.snapN,
+    fx: SFX.out.splice(0), // 這段時間房主播放過的音效(sound.js)
     t: r2(G.t),
     sc: G.score,
     gT: r2(G.goalT),
@@ -203,6 +204,7 @@ function applySnap(s) {
   G.turrets = s.tu.map(([x, y, a, hp, max, o, hit]) => ({ x, y, a, hp, max, o, hit }));
   G.gems = s.g.map(([x, y, age, cube]) => ({ x, y, age, cube }));
   G.parts = s.p;
+  for (const [k, x, y] of s.fx || []) sfxPlay(k, x === null ? undefined : x, y === null ? undefined : y);
   for (let i = walls.length - 1; i >= 0; i--) if (walls[i].tmp) walls.splice(i, 1);
   for (const [x, y, w, h, t] of s.w) walls.push({ x, y, w, h, t, tmp: 1 });
 }

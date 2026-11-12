@@ -55,7 +55,8 @@ addEventListener(
           s.dx = dx / L;
           s.dy = dy / L;
         }
-    e.preventDefault();
+    // 只有比賽中才擋掉預設的捲動;數學、商店、角色、房間等頁面要能用手指往下捲
+    if (!homeOn && ui.style.display === "none") e.preventDefault();
   },
   { passive: false },
 );

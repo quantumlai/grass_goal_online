@@ -1468,3 +1468,76 @@ button.link {
     padding: 6px 0;
   }
 }
+
+/* ===== 手機:選單頁可以用手指捲動(body 的 touch-action: none 只給比賽畫面用) ===== */
+#ui,
+#math,
+#mres,
+#roster,
+#detail,
+#shopscr,
+#sdetail,
+#acct,
+#room {
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* ===== 數學挑戰:依可視高度縮放(dvh 會扣掉手機瀏覽器的網址列與工具列) ===== */
+#math {
+  gap: 8px;
+  gap: clamp(4px, 1.2dvh, 12px);
+}
+.mtop {
+  gap: clamp(3px, 0.8dvh, 8px);
+}
+#mPlay {
+  gap: 8px;
+  gap: clamp(4px, 1.2dvh, 12px);
+  min-height: 0;
+}
+#mQ {
+  font-size: clamp(20px, min(7vw, 4.6dvh), 40px);
+  min-height: 0;
+}
+#mFx {
+  min-height: 22px;
+  font-size: clamp(15px, 2.4dvh, 20px);
+}
+#mPad {
+  gap: clamp(5px, 1.2dvh, 10px);
+}
+#mPad button {
+  padding: 0;
+  height: 52px;
+  height: clamp(40px, 7.5dvh, 62px);
+  font-size: clamp(20px, 3.6dvh, 30px);
+}
+@media (max-height: 520px) {
+  /* 橫式手機:題目在左、鍵盤在右,題目可以用比較大的字 */
+  #mQ {
+    font-size: clamp(20px, 7dvh, 30px);
+  }
+  #mPad button {
+    height: clamp(36px, 10dvh, 52px);
+    font-size: clamp(18px, 5.5dvh, 24px);
+  }
+}
+/* 結算頁的「領取獎勵」固定在畫面底部,內容再長也不用捲動就按得到 */
+#mrOk {
+  position: sticky;
+  bottom: 0;
+  flex-shrink: 0;
+  margin-top: auto;
+  box-shadow:
+    0 6px 0 #b8860b,
+    0 -10px 20px rgba(18, 52, 90, 0.9);
+}
+.qtxt {
+  display: block;
+  text-align: center;
+}
+.qtxt .slot {
+  vertical-align: middle;
+}

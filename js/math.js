@@ -299,10 +299,11 @@ function mNext() {
 }
 function mDraw(state) {
   const v = M.typed === "" ? "&nbsp;" : M.typed;
-  mEl("mQ").innerHTML = M.cur.q.replace(
-    "□",
-    `<span class="slot${state ? " " + state : ""}">${v}</span>`,
-  );
+  // 整段題目包在一個 span 裡,多行題目才會照一般文字的順序換行(#mQ 是 flex 置中)
+  mEl("mQ").innerHTML =
+    '<span class="qtxt">' +
+    M.cur.q.replace("□", `<span class="slot${state ? " " + state : ""}">${v}</span>`) +
+    "</span>";
 }
 function mKey(k) {
   if (!M || !M.on || M.lock) return;

@@ -53,6 +53,7 @@
         <button id="hTut" class="mitem">🎓 遊戲練習<small>學會移動、攻擊、射門</small></button>
         <button id="hMathP" class="mitem">📝 數學練習<small>不計時,先看看題目</small></button>
         <button id="hRoom" class="mitem">👥 開房間<small>找朋友一起玩</small></button>
+        <button id="hAva" class="mitem">🎨 我的頭像<small>自己組合臉、眼睛、帽子…</small></button>
         <button id="mnSet" class="mitem">⚙️ 設定<small>背景音樂、音效</small></button>
         <button id="hAcct" class="mitem">👤 帳號<small>登入、註冊、登出</small></button>
       </div>
@@ -61,6 +62,18 @@
         <label class="mtoggle"><span>🎵 背景音樂</span><input type="checkbox" id="setMusic" /><i></i></label>
         <label class="mtoggle"><span>🔊 音效</span><input type="checkbox" id="setSfx" /><i></i></label>
       </div>
+    </div>
+    <!-- 頭像編輯器(avatar.js) -->
+    <div id="avatar" style="display: none">
+      <div class="rtop">
+        <button id="avBack" class="ch">⬅ 返回</button>
+        <h2>🎨 我的頭像</h2>
+        <button id="avRandom" class="ch" aria-label="隨機">🎲 隨機</button>
+      </div>
+      <div id="avPrev"></div>
+      <div id="avTabs"></div>
+      <div id="avOpts"></div>
+      <button id="avSave">儲存</button>
     </div>
     <div id="shopscr" style="display: none">
       <div class="rtop">
@@ -291,6 +304,7 @@
     <script src="js/shop.js"></script>
     <script src="js/math.js"></script>
     <script src="js/rewards.js"></script>
+    <script src="js/avatar.js"></script>
     <script src="js/economy.js"></script>
     <script src="js/account.js"></script>
     <script src="js/playroom.js"></script>

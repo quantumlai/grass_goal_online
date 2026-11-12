@@ -114,6 +114,7 @@ function syncProfile(force) {
     name: myName(),
     ci: pick,
     loadout: myLoadout(),
+    avatar: myAvatar(), // 頭像(別人收到後會經過 avClean 檢查)
     ready: !P.mathPending,
     st: myStatus(),
   };

@@ -84,6 +84,9 @@ const llCredit = (s, wallet, currencyId, n) =>
   llGame(s, "balances/credit", { body: { amount: String(n), currency_id: currencyId, wallet_id: wallet } });
 const llDebit = (s, wallet, currencyId, n) =>
   llGame(s, "balances/debit", { body: { amount: String(n), currency_id: currencyId, wallet_id: wallet } });
+// 玩家儲存空間(key / value 都是字串):頭像設定存在 key "avatar"
+const llStorageGet = (s) => llGame(s, "v1/player/storage", { method: "GET" }); // → { payload: [{ key, value, is_public, order }] }
+const llStorageSet = (s, items) => llGame(s, "v1/player/storage", { body: { payload: items } });
 // 排行榜
 const llLbMember = (s, key, member) =>
   llGame(s, "leaderboards/" + key + "/member/" + encodeURIComponent(member), { method: "GET" }); // → { rank, score, metadata }

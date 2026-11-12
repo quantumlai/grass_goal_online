@@ -2098,3 +2098,186 @@ button.new::after {
     padding: 2px 10px;
   }
 }
+
+/* ===== 頭像(avatar.js) ===== */
+#hUser {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 12px 2px 3px;
+}
+#hUser svg {
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 2px solid #fff;
+}
+#hUser span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.meav svg,
+.rmic svg {
+  border-radius: 50%;
+  display: block;
+}
+.meav {
+  overflow: hidden;
+  border: 3px solid #fff;
+}
+.rmic {
+  flex-shrink: 0;
+}
+#avatar {
+  position: fixed;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  overflow-y: auto;
+  touch-action: pan-y;
+  padding: calc(env(safe-area-inset-top, 0px) + 12px) 14px 0;
+  background: linear-gradient(180deg, #4a2a8f, #14175a);
+}
+#avatar .rtop {
+  width: 100%;
+  max-width: 520px;
+}
+#avRandom {
+  font-size: 13px;
+  padding: 5px 10px;
+}
+#avPrev svg {
+  border-radius: 50%;
+  border: 4px solid #fff;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.3);
+  display: block;
+}
+#avTabs {
+  display: flex;
+  flex-wrap: wrap; /* 分頁全部看得到,不用左右滑 */
+  justify-content: center;
+  gap: 6px;
+  max-width: 520px;
+  padding: 4px 2px;
+  flex-shrink: 0;
+}
+#avTabs button {
+  font-size: 14px;
+  padding: 5px 12px;
+  white-space: nowrap;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  box-shadow: none;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+}
+#avTabs button.on {
+  background: var(--accent);
+  color: #3a2a00;
+  border-color: #fff;
+}
+#avOpts {
+  width: 100%;
+  max-width: 520px;
+}
+#avOpts h4 {
+  margin: 8px 0 4px;
+  font-size: 14px;
+}
+.avgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: 6px;
+}
+.avgrid button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 5px 2px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 3px solid transparent;
+  box-shadow: none;
+  color: #fff;
+  border-radius: 12px;
+}
+.avgrid button svg {
+  border-radius: 50%;
+}
+.avgrid button small {
+  font-size: 11px;
+  font-weight: 700;
+}
+.avgrid button.on {
+  border-color: var(--accent);
+  background: rgba(255, 210, 63, 0.2);
+}
+.avcolors {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 800;
+}
+.avcolors button {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.4);
+  box-shadow: none;
+}
+.avcolors button.on {
+  border-color: #fff;
+  outline: 3px solid var(--accent);
+}
+#avSave {
+  position: sticky;
+  bottom: 0;
+  width: min(520px, 100%);
+  margin: 6px 0 calc(env(safe-area-inset-bottom, 0px) + 10px);
+  flex-shrink: 0;
+  box-shadow:
+    0 6px 0 #b8860b,
+    0 -10px 20px rgba(20, 23, 90, 0.9);
+}
+@media (max-height: 520px) and (orientation: landscape) {
+  #avatar {
+    display: grid;
+    grid-template-columns: 170px 1fr;
+    grid-template-rows: auto auto 1fr auto;
+    align-items: start;
+    column-gap: 14px;
+  }
+  #avatar .rtop {
+    grid-column: 1 / -1;
+    max-width: none;
+  }
+  #avPrev {
+    grid-row: 2 / 5;
+    justify-self: center;
+  }
+  #avPrev svg {
+    width: 140px;
+    height: 140px;
+  }
+  #avTabs,
+  #avOpts,
+  #avSave {
+    grid-column: 2;
+  }
+}
+@media (max-height: 520px) and (orientation: landscape) {
+  #avSave {
+    font-size: 17px;
+    padding: 6px 20px;
+    margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 6px);
+  }
+  #avTabs button {
+    font-size: 12px;
+    padding: 3px 10px;
+  }
+}

@@ -58,14 +58,20 @@ function showAcct(v) {
   view(v || (acct ? "aMe" : "aLogin"));
 }
 function updAcctBtn() {
-  // 首頁顯示目前登入的是誰(選單裡的「帳號」文字固定不變)
-  aEl("hUser").textContent = acct ? "👤 " + (acct.name || acct.email) : "👤 未登入";
+  // 首頁顯示頭像和目前登入的是誰(選單裡的「帳號」文字固定不變);點它可以換頭像
+  const acctOpen = typeof UNLOCKS !== "undefined" && UNLOCKS.find((u) => u.k === "acct").need();
+  aEl("hUser").innerHTML =
+    avatarSVG(myAvatar(), 28) +
+    "<span>" +
+    escHtml(acct ? acct.name || acct.email : acctOpen ? "未登入" : "換頭像") +
+    "</span>";
   const t = aEl("envTag");
   t.textContent = "DEV · " + ENV.name;
   t.style.display = ENV_NAME === "development" ? "" : "none";
 }
 function renderMe() {
   aEl("aMeName").textContent = acct.name || "(還沒設定名稱)";
+  document.querySelector("#aMe .meav").innerHTML = avatarSVG(myAvatar(), 80);
   aEl("aMeEmail").textContent = acct.email;
   aEl("aMeWallet").textContent = wallet("ce");
   econUI();
@@ -107,6 +113,7 @@ async function finishLogin(email, wlToken) {
   store.set(ACCT_KEY, acct);
   updAcctBtn();
   econSync(); // 背景同步金幣、能量、排行榜,不擋住登入畫面
+  avatarSync(); // 頭像(跟金幣分開同步)
 }
 async function doLogin(email, pw) {
   const l = await llLogin(email, pw);
@@ -257,7 +264,7 @@ aEl("aRToLogin").onclick = () => view(acct ? "aMe" : "aLogin");
 aEl("aMeReset").onclick = showReset;
 aEl("aDoneLogin").onclick = () => view("aLogin");
 aEl("hAcct").onclick = () => showAcct();
-aEl("hUser").onclick = () => showAcct();
+aEl("hUser").onclick = () => openAvatar();
 if (acct) econUseCached(); // 先用上次的餘額顯示,自動登入後再同步
 updAcctBtn();
 restoreLogin();

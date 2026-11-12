@@ -25,7 +25,7 @@ const UNLOCKS = [
   },
   {
     k: "acct",
-    els: ["hAcct", "hUser"],
+    els: ["hAcct"],
     need: () => P.played >= 5 || !!acct, // 已經登入的人一直顯示
     hint: "👤 「☰ 選單」裡可以建立帳號,把金幣和成績存起來。",
     btn: "hAcct",
@@ -48,6 +48,7 @@ P.seen = P.seen || {};
 
 // 依解鎖狀態顯示 / 隱藏首頁元素,加上 NEW 標記與說明(updHome 會呼叫)
 function updUnlocks() {
+  updAcctBtn(); // 首頁的頭像標籤:登入名稱 / 未登入 / 換頭像
   // 已經在用的功能不需要 NEW:登入過的帳號、用過的好友房間
   if (acct) P.seen.acct = true;
   if (P.roomUsed) P.seen.room = true;

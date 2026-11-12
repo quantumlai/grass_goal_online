@@ -55,7 +55,7 @@ function roomUI() {
           '" style="border-color:' +
           TEAMC[tm] +
           '"><span class="rmic">' +
-          c.icon +
+          avatarSVG(prof.avatar, 36) +
           "</span><div><b>" +
           (pl.id === hostId ? "👑 " : "") +
           escHtml(prof.name) +
@@ -64,6 +64,7 @@ function roomUI() {
           TEAMN[tm] +
           (moved ? "(原隊已滿)" : "") +
           " · " +
+          c.icon +
           c.name +
           " · " +
           ROLES[c.role] +

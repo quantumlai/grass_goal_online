@@ -84,6 +84,10 @@ async function withSession(fn) {
   }
 }
 async function econRun(op) {
+  if (op.t === "store") {
+    // 玩家儲存空間(頭像);公開資料,之後排行榜也能顯示別人的頭像
+    return withSession((s) => llStorageSet(s, [{ key: op.key, value: op.v, is_public: true, order: 1 }]));
+  }
   if (op.t === "credit" || op.t === "debit") {
     const f = op.t === "credit" ? llCredit : llDebit;
     return withSession((s) => f(s, acct.walletId, econCur[op.c], op.n));
@@ -256,4 +260,40 @@ function econUI() {
         : econ.state === "ok"
           ? "☁️ 金幣、能量、排行榜都已同步"
           : "");
+}
+
+// ── 頭像同步 ──
+// 帳號裡有頭像就用帳號的(換手機也會跟著);帳號裡還沒有,就把這台裝置的頭像存上去。
+// 讀回來的資料一律經過 avClean() 檢查。跟金幣同步分開:金幣那邊出錯也不影響頭像。
+async function avatarSync() {
+  let remote = null;
+  try {
+    const r = await withSession((s) => llStorageGet(s));
+    const item = (r.payload || []).find((p) => p.key === "avatar");
+    if (item) remote = JSON.parse(item.value);
+  } catch (e) {
+    console.warn("讀取頭像失敗", e.message);
+    return;
+  }
+  if (remote) {
+    P.avatar = avClean(remote);
+    save();
+    updAcctBtn();
+    if (typeof syncProfile === "function") syncProfile();
+  } else avatarUpload();
+}
+// 把目前的頭像放進佇列送到帳號(沒登入就只存在這台裝置)
+function avatarUpload() {
+  if (!acct) return;
+  const v = JSON.stringify(myAvatar());
+  if (econ.online && econ.ready) {
+    // 走佇列:斷線時留著,恢復後補送
+    econ.queue = econ.queue.filter((o) => !(o.t === "store" && o.key === "avatar")); // 只留最新的一筆
+    econPush({ t: "store", key: "avatar", v });
+  } else {
+    // 金幣系統還沒準備好(例如後台貨幣設定有問題):直接送
+    withSession((s) => llStorageSet(s, [{ key: "avatar", value: v, is_public: true, order: 1 }])).catch((e) =>
+      console.warn("頭像上傳失敗", e.message),
+    );
+  }
 }

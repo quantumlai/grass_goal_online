@@ -389,6 +389,7 @@ function draw() {
       ctx.fillText(q.txt, q.x, q.y - (0.25 - q.t) * 60);
     }
   }
+  drawEmotes(); // 好友房間的表情對話框(room.js)
   ctx.restore();
   {
     const vg = ctx.createRadialGradient(

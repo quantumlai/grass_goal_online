@@ -35,15 +35,25 @@ const ENVS = {
     timing: { matchSecs: 180, mathSecs: 120, tokenAt: 12 },
     lootlocker: {
       // TODO: 填入正式環境的 game key(prod_ 開頭)。確認正式環境用的 API 網域是否相同。
-      apiDomain: "https://w3meemf6.api.lootlocker.com",
-      domainKey: "w3meemf6",
-      gameKey: "",
+      apiDomain: "https://1jjsx26h.api.lootlocker.com",
+      domainKey: "1jjsx26h",
+      gameKey: "dev_27d7155e7efb473097dba7f324246fdf",
       isDevelopment: false,
       ...LL_ECONOMY,
     },
   },
 };
 const GAME_VERSION = "1.0.0";
+// Playroom Kit(好友房間連線)。只有打開「好友房間」時才會載入。
+// gameId:到 Playroom Dev Portal 建立專案後取得(Configuration → General)。
+//   沒填也能連線,但會出現警告;免費方案每天限 10 位不重複玩家。
+const PLAYROOM = {
+  sdk: "https://unpkg.com/playroomkit@0.0.97/multiplayer.full.umd.js", // 固定版本,升級前先測試
+  gameId: "1n71gAP8uNaLs5JyZqdG", 
+  maxPlayers: 4,
+  snapHz: 15, // 房主每秒送幾次狀態
+  inputHz: 30, // 其他玩家每秒送幾次輸入
+};
 const ENV_NAME = (() => {
   const q = new URLSearchParams(location.search).get("env");
   if (q && ENVS[q]) return q;

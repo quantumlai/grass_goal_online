@@ -33,6 +33,7 @@
           <div id="hName"></div>
           <button class="arrow" id="hNext" aria-label="下一個角色">›</button>
         </div>
+        <button id="hRoom" class="ch">👥 好友房間</button>
         <div class="hbtns">
           <button class="sbtn" id="hShop">🛒<small>商店</small></button
           ><button id="play">出擊!</button
@@ -162,6 +163,44 @@
         <button id="aLogout" class="ch">登出</button>
       </div>
     </div>
+    <!-- 好友房間(Playroom) -->
+    <div id="room" style="display: none">
+      <div class="rtop">
+        <button id="rmBack" class="ch">⬅ 返回</button>
+        <h2>👥 好友房間</h2>
+        <span></span>
+      </div>
+      <div id="rmStart" class="aview">
+        <p class="ahint">跟朋友一起玩!一個房間最多 4 個人,其他位置由電腦補滿 7 對 7。</p>
+        <button id="rmCreate">🏠 建立房間</button>
+        <label
+          >有房間代碼?
+          <input id="rmCode" type="text" maxlength="12" autocomplete="off" autocapitalize="characters" placeholder="輸入房間代碼"
+        /></label>
+        <button id="rmJoin" class="sbtn2">加入房間</button>
+        <div id="rmMsg" class="amsg" role="status" aria-live="polite"></div>
+      </div>
+      <div id="rmIn" class="aview">
+        <div class="rmcode">
+          <small>房間代碼</small><b id="rmCodeShow"></b>
+          <button id="rmCopy" class="ch">📋 複製邀請連結</button>
+        </div>
+        <div id="rmList"></div>
+        <div class="rmpick">
+          <button class="arrow" id="rmPrev" aria-label="上一個英雄">‹</button>
+          <div id="rmHero"></div>
+          <button class="arrow" id="rmNext" aria-label="下一個英雄">›</button>
+        </div>
+        <div id="rmEmos" class="emos"></div>
+        <div id="rmNote" class="amsg" role="status" aria-live="polite"></div>
+        <button id="rmMath" style="display: none">📝 先做數學挑戰</button>
+        <button id="rmGo">⚽ 開始比賽</button>
+        <button id="rmLeave" class="ch">離開房間</button>
+      </div>
+    </div>
+    <!-- 比賽中的表情按鈕(只有好友房間會出現) -->
+    <button id="emoBtn" style="display: none" aria-label="表情">😊</button>
+    <div id="emoPanel" class="emos" style="display: none"></div>
     <!-- 比賽結果:顯示比分與勝場獎勵,接著一定要做數學挑戰 -->
     <div id="ui" style="display: none">
       <h1 id="rTitle"></h1>
@@ -223,6 +262,8 @@
     <script src="js/rewards.js"></script>
     <script src="js/economy.js"></script>
     <script src="js/account.js"></script>
+    <script src="js/playroom.js"></script>
+    <script src="js/room.js"></script>
     <script src="js/main.js"></script>
   </body>
 </html>

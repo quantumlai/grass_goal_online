@@ -435,5 +435,5 @@ mEl("mrOk").onclick = () => {
   P.mathPending = false;
   save();
   M = null;
-  showHome();
+  afterMath(); // 在好友房間就回房間,否則回首頁(room.js)
 };

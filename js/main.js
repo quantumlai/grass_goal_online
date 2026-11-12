@@ -4,6 +4,7 @@ function loop(ts) {
   const dt = Math.min(0.05, (ts - last) / 1000 || 0);
   last = ts;
   try {
+    Net.tick(dt); // 連線:開賽、快照、結果、表情(單機版什麼都不做)
     if (homeOn) {
       drawHome(ts);
       if (detailOn) drawDetail(ts);

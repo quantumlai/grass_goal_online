@@ -198,13 +198,19 @@ function reset(players = Net.players()) {
   }
   // 真人排在最前面(id 0 起),電腦在後
   const all = slots.filter((s) => s.pl).concat(slots.filter((s) => !s.pl));
-  G = {
-    t: TIMING.matchSecs, // 比賽時間(秒),見 config.js
-    ents: all.map((s, i) => {
+  G = makeG(
+    all.map((s, i) => {
       const q = SPW[s.slot];
       return mk(i, s.tm ? W - q[0] : q[0], q[1], s.ci, s.tm, s.role, s.pl);
     }),
-    me: 0, // 本機玩家操控的角色在 G.ents 的位置
+  );
+}
+// 一場比賽的完整狀態(G)
+function makeG(ents) {
+  return {
+    t: TIMING.matchSecs, // 比賽時間(秒),見 config.js
+    ents,
+    me: Math.max(0, ents.findIndex((e) => e.pid === Net.myId())), // 本機玩家操控的角色在 G.ents 的位置
     bul: [],
     mines: [],
     clouds: [],
@@ -221,7 +227,6 @@ function reset(players = Net.players()) {
     over: false,
     shake: 0,
   };
-  G.me = Math.max(0, G.ents.findIndex((e) => e.pid === Net.myId()));
 }
 function dropGem(x, y, n) {
   for (let i = 0; i < n; i++)

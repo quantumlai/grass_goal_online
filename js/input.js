@@ -11,6 +11,7 @@ addEventListener(
   "touchstart",
   (e) => {
     if (ui.style.display !== "none" || homeOn) return;
+    if (e.target.closest && e.target.closest("#emoBtn,#emoPanel")) return; // 表情按鈕交給 DOM 處理
     for (const t of e.changedTouches) {
       if (Math.hypot(t.clientX - (vw - 62), t.clientY - (vh - 78)) < 50) {
         superReq = true;
@@ -90,6 +91,7 @@ addEventListener("mousemove", (e) => {
   mouse.y = e.clientY;
 });
 addEventListener("mousedown", (e) => {
+  if (e.target.closest && e.target.closest("#emoBtn,#emoPanel")) return;
   if (Math.hypot(e.clientX - (vw - 62), e.clientY - (vh - 78)) < 50) {
     superReq = true;
     return;

@@ -1189,3 +1189,150 @@ button.link {
   text-decoration: underline;
   align-self: center;
 }
+
+/* ===== 好友房間 ===== */
+#hRoom {
+  font-size: 15px;
+  padding: 6px 16px;
+}
+#room {
+  position: fixed;
+  inset: 0;
+  z-index: 6;
+  flex-direction: column;
+  align-items: center;
+  overflow-y: auto;
+  padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px
+    calc(env(safe-area-inset-bottom, 0px) + 18px);
+  background: linear-gradient(180deg, #1f6f8b, #14175a);
+}
+#room .rtop {
+  width: 100%;
+  max-width: 420px;
+}
+#rmIn {
+  align-items: stretch;
+}
+.rmcode {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 14px;
+  padding: 10px;
+}
+.rmcode b {
+  font-size: 34px;
+  letter-spacing: 4px;
+  color: var(--accent);
+  user-select: text;
+  -webkit-user-select: text;
+}
+#rmList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rmp {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 3px solid;
+  border-radius: 12px;
+  padding: 8px 10px;
+}
+.rmp.me {
+  background: rgba(255, 210, 63, 0.15);
+}
+.rmic {
+  font-size: 28px;
+}
+.rmp div {
+  flex: 1;
+  min-width: 0;
+}
+.rmp b {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rmp small {
+  opacity: 0.85;
+  font-size: 12px;
+}
+.rmp em {
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.rmemo {
+  position: absolute;
+  top: -12px;
+  right: 8px;
+  background: #fff;
+  color: #14122b;
+  border-radius: 10px;
+  padding: 1px 8px;
+  font-weight: 800;
+  font-size: 14px;
+}
+.rmpick {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+#rmHero {
+  min-width: 160px;
+  text-align: center;
+  font-weight: 900;
+  font-size: 20px;
+}
+#rmHero small {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.85;
+}
+#rmGo:disabled {
+  opacity: 0.5;
+}
+.emos {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+.emos button {
+  font-size: 15px;
+  padding: 6px 2px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #14122b;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+}
+#emoBtn {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 46px);
+  right: 12px;
+  z-index: 4;
+  font-size: 26px;
+  padding: 4px 10px;
+  background: rgba(0, 0, 0, 0.45);
+  box-shadow: none;
+}
+#emoPanel {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 96px);
+  right: 12px;
+  z-index: 4;
+  width: min(360px, calc(100vw - 24px));
+  grid-template-columns: repeat(4, 1fr);
+  background: rgba(0, 0, 0, 0.6);
+  padding: 8px;
+  border-radius: 14px;
+}

@@ -32,7 +32,7 @@ function updHome() {
 }
 function showHome() {
   homeOn = true;
-  [ui, shopScr, sdetail, roster, detail, mathScr, mresScr, acctScr].forEach(
+  [ui, shopScr, sdetail, roster, detail, mathScr, mresScr, acctScr, roomScr].forEach(
     (el) => (el.style.display = "none"),
   );
   detailOn = false;

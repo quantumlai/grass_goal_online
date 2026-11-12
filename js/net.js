@@ -10,6 +10,7 @@
 //   collectInputs()      房主:取得這一幀所有真人的輸入 { 玩家 id: 輸入資料 }
 //   sendInput(inp)       非房主:把自己這一幀的輸入送給房主
 //   publish(G)           房主:模擬完一幀後把狀態送給其他玩家
+//   tick(dt)             每一幀都會呼叫:處理收到的資料(開賽、快照、結果…)
 const LocalNet = {
   name: "local",
   isHost: () => true,
@@ -25,5 +26,6 @@ const LocalNet = {
   collectInputs: () => ({ local: readLocalInput() }),
   sendInput() {},
   publish() {},
+  tick() {},
 };
 let Net = LocalNet;

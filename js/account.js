@@ -58,13 +58,9 @@ function showAcct(v) {
   view(v || (acct ? "aMe" : "aLogin"));
 }
 function updAcctBtn() {
-  // 首頁顯示頭像和目前登入的是誰(選單裡的「帳號」文字固定不變);點它可以換頭像
-  const acctOpen = typeof UNLOCKS !== "undefined" && UNLOCKS.find((u) => u.k === "acct").need();
+  // 首頁顯示頭像和目前登入的是誰(選單裡的「帳號」文字固定不變);點它進帳號頁(登入 / 我的帳號、登出)
   aEl("hUser").innerHTML =
-    avatarSVG(myAvatar(), 28) +
-    "<span>" +
-    escHtml(acct ? acct.name || acct.email : acctOpen ? "未登入" : "換頭像") +
-    "</span>";
+    avatarSVG(myAvatar(), 28) + "<span>" + escHtml(acct ? acct.name || acct.email : "未登入") + "</span>";
   const t = aEl("envTag");
   t.textContent = "DEV · " + ENV.name;
   t.style.display = ENV_NAME === "development" ? "" : "none";
@@ -264,7 +260,8 @@ aEl("aRToLogin").onclick = () => view(acct ? "aMe" : "aLogin");
 aEl("aMeReset").onclick = showReset;
 aEl("aDoneLogin").onclick = () => view("aLogin");
 aEl("hAcct").onclick = () => showAcct();
-aEl("hUser").onclick = () => openAvatar();
+aEl("hUser").onclick = () => showAcct();
+aEl("aMeAva").onclick = () => openAvatar();
 if (acct) econUseCached(); // 先用上次的餘額顯示,自動登入後再同步
 updAcctBtn();
 restoreLogin();

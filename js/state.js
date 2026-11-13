@@ -38,7 +38,7 @@ const SKINS = [
 const P = {
   energy: 0, // 戰力能量
   tokens: 0, // 星光代幣
-  vouchers: 0, // 升級券(當日 5 勝獎勵,可免費升一級)
+  vouchers: 0, // 升級券(當日 5 勝獎勵,可免費升一級;登入後存在 LootLocker 的 UES)
   lv: {}, // 英雄等級 {角色索引: 等級},沒有記錄就是 Lv.1
   unlocked: START_HEROES.slice(),
   acc: [], // 已購買的配件
@@ -50,7 +50,7 @@ const P = {
   passGift: false, // 這台裝置送過 5 張見面禮了
   giftPending: false, // 見面禮還沒轉進任何帳號(登入時轉入,帳號就不再另外送)
   tutDone: false, // 做完過一次遊戲練習
-  dbl: false, // 下一場數學挑戰金幣 ×2
+  dbl: 0, // 雙倍卡:下一次刷題金幣 ×2,最多 1 張(登入後存在 LootLocker 的 XX2)
   daily: { date: "", wins: 0, m5: false },
   streak: { start: "", days: [] }, // 上線獎勵:這一輪從哪天開始、哪幾天有上線(見 rewards.js)
   pick: 0,
@@ -61,12 +61,13 @@ try {
   Object.assign(up, sv.up || {});
   if (sv.P) Object.assign(P, sv.P);
 } catch (err) {}
-// 金幣、能量、通行卷、星光代幣的來源:沒登入時用這台裝置的(money、P.energy、P.passes、P.tokens);
+P.dbl = P.dbl ? 1 : 0; // 舊存檔是 true/false
+// 金幣、能量、通行卷、星光代幣、升級券、雙倍卡的來源:沒登入時用這台裝置的(money、P.energy、P.passes、P.tokens、P.vouchers、P.dbl);
 // 登入後 money、P.energy 改成顯示 LootLocker 錢包的餘額,裝置上的那份暫存在 econ.guest(見 economy.js)
 const econ = {
   online: false, // 目前是否使用帳號錢包
   ready: false, // 貨幣 ID 與錢包 ID 都已取得,可以送出交易
-  guest: { money: 0, energy: 0, passes: 0, tokens: 0 },
+  guest: { money: 0, energy: 0, passes: 0, tokens: 0, vouchers: 0, dbl: 0 },
   queue: [], // 還沒送到 LootLocker 的交易與排行榜更新
   state: "", // "" | "sync" | "ok" | "err"
   warn: "",
@@ -75,7 +76,7 @@ function save() {
   P.pick = pick;
   // 登入期間只把裝置上的那份寫進存檔,避免帳號的錢在登出後被複製到裝置上
   const sv = econ.online
-    ? { v: 2, money: econ.guest.money, up, P: { ...P, energy: econ.guest.energy, passes: econ.guest.passes || 0, tokens: econ.guest.tokens || 0 } }
+    ? { v: 2, money: econ.guest.money, up, P: { ...P, energy: econ.guest.energy, passes: econ.guest.passes || 0, tokens: econ.guest.tokens || 0, vouchers: econ.guest.vouchers || 0, dbl: econ.guest.dbl || 0 } }
     : { v: 2, money, up, P };
   try {
     localStorage.setItem("brawlSave", JSON.stringify(sv));

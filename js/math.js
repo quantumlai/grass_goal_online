@@ -528,7 +528,7 @@ mEl("mrOk").onclick = () => {
   );
   if (critPick === "energy") addEnergy(CRIT_ENERGY * M.crits);
   lbAdd(LB.math, M.right, M.total); // 答對題數、答題數累加到排行榜
-  P.dbl = false;
+  if (M.dbl) spendDbl();
   P.mathPending = false;
   save();
   M = null;

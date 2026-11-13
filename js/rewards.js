@@ -95,11 +95,11 @@ function onMatchEnd(res) {
   lbAdd(LB.wins, res === "win" ? 1 : 0, 1); // 勝場數 +1(只有贏才加)、出賽數 +1
   if (res === "win") {
     P.daily.wins++;
-    P.dbl = true;
+    addDbl();
     notes.push("🃏 <b>雙倍卡啟動!</b>下次刷題,每題金幣 ×2");
     if (P.daily.wins >= 5 && !P.daily.m5) {
       P.daily.m5 = true;
-      P.vouchers++;
+      addVouchers(1);
       notes.push("🎫 <b>今日 5 勝!</b>獲得升級券:任選一位英雄免費升一級");
     }
   }
@@ -150,8 +150,7 @@ function levelUpHero(ci, useVoucher) {
   const l = heroLv(ci);
   if (!isUnlocked(ci) || l >= HERO_MAXLV) return false;
   if (useVoucher) {
-    if (P.vouchers < 1) return false;
-    P.vouchers--;
+    if (!spendVoucher()) return false;
   } else {
     if (!spendEnergy(lvCost(l))) return false;
   }

@@ -266,7 +266,7 @@ if (acct) econUseCached(); // 先用上次的餘額顯示,自動登入後再同�
 updAcctBtn();
 restoreLogin();
 
-// 我的帳號:個人財富(LootLocker 錢包的貨幣,加上存在這台裝置的代幣、升級券)
+// 我的帳號:個人財富(LootLocker 錢包的貨幣)
 function wealthHTML() {
   const rows = [
     ["💰", "金幣", money],
@@ -274,6 +274,7 @@ function wealthHTML() {
     ["🎟️", "通行卷", P.passes],
     ["⭐", "星光代幣", P.tokens],
     ["🎫", "升級券", P.vouchers],
+    ["🃏", "雙倍卡", P.dbl],
   ];
   return rows.map(([i, n, v]) => `<div><span>${i}</span><small>${n}</small><b>${v}</b></div>`).join("");
 }

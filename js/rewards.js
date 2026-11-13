@@ -117,7 +117,7 @@ function onMatchEnd(res) {
     "</div>" +
     dailyHTML() +
     notes.map((n) => '<p class="note">' + n + "</p>").join("") +
-    (P.passes < 1 ? '<p class="note">🎟️ <b>通行卷用完了!</b>刷數學題,連續答對 5 題就能換 1 張。</p>' : "");
+    (P.passes < 1 ? '<p class="note">🎟️ <b>通行卷用完了!</b>刷數學題,連續答對 ' + PASS_STREAK + " 題,或 " + durText(MATH_SECS) + "內答對 " + PASS_TIMED + ' 題,就能換 1 張。</p>' : "");
   resultButtons();
   ui.style.display = "flex";
 }

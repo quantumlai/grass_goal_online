@@ -8,7 +8,7 @@ function infoHTML() {
     {
       ic: "🎟️",
       n: "通行卷",
-      get: `第一次打開送 ${PASS_GIFT} 張;刷題<b>連續答對 ${PASS_STREAK} 題</b>換 1 張(答錯或離開就從 0 開始)`,
+      get: `第一次打開送 ${PASS_GIFT} 張;刷題<b>連續答對 ${PASS_STREAK} 題</b>換 1 張(答錯或離開就從 0 開始),或<b>${durText(MATH_SECS)}內答對 ${PASS_TIMED} 題</b>換 1 張`,
       use: "<b>1 張玩 1 場足球比賽</b>(單機、好友房間都要用;練習不用)",
       where: "LootLocker 帳號(PSS)",
     },

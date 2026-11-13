@@ -63,7 +63,10 @@ function startMatch() {
   if (!isUnlocked(pick)) return;
   if (!spendPass()) {
     showHome();
-    homeTip("🎟️ 通行卷用完了!按「刷題換通行卷」,連續答對 5 題就能換 1 張。");
+    homeTip(
+      "🎟️ 通行卷用完了!按「刷題換通行卷」,連續答對 " + PASS_STREAK + " 題," +
+        "或 " + durText(MATH_SECS) + "內答對 " + PASS_TIMED + " 題,就能換 1 張。",
+    );
     document.getElementById("hPassMath").classList.add("hint");
     return;
   }

@@ -239,8 +239,14 @@ const mathScr = mEl("math"),
 let M = null,
   mTimer = 0;
 // 開始數學挑戰。opts.practice = true 是「數學練習」:不計時、沒有獎勵、可以選單元
-// opts.pass = true 是「刷題換通行卷」:不計時,連續答對 PASS_STREAK 題換 1 張通行卷,答錯或離開就歸零
-const PASS_STREAK = 5;
+// opts.pass = true 是「刷題換通行卷」,進去後選兩種模式:
+//   連對模式(M.pass):不計時,連續答對 PASS_STREAK 題換 1 張通行卷,答錯或離開就歸零
+//   限時模式(M.timed):MATH_SECS 秒內答對 PASS_TIMED 題換 1 張(就是原本的 2 分鐘數學挑戰,有能量暴擊)
+// PASS_TIMED 的估算:一般小朋友(答對率約 8 成、每題約 12 秒)連對 5 題平均要 2 分多鐘,
+// 2 分鐘大約答 10 題、對 7~8 題;6 題時約 8 成的機會達標,換卷速度和連對模式差不多。
+// 開發環境秒數較短,題數照比例縮小。
+const PASS_STREAK = 5,
+  PASS_TIMED = Math.max(1, Math.round((6 * MATH_SECS) / 120));
 function startMath(opts) {
   const practice = !!(opts && opts.practice === true),
     pass = !!(opts && opts.pass === true);
@@ -265,6 +271,7 @@ function startMath(opts) {
     dbl: practice ? false : P.dbl,
     practice,
     pass,
+    timed: false, // 刷題換通行卷的限時模式
     passes: 0, // 這次刷題換到幾張通行卷
     units: null, // 練習時選的單元(null = 全部)
   };
@@ -274,6 +281,7 @@ function startMath(opts) {
   mEl("mPlay").style.display = "none";
   mEl("mRules").style.display = practice ? "none" : "";
   mEl("mUnits").style.display = practice ? "" : "none";
+  mEl("mModes").style.display = pass ? "" : "none";
   mEl("mEnd").style.display = "none"; // 練習開始作答後才出現
   mEl("mStart").textContent = practice ? "開始練習" : "準備好了,開始!";
   mEl("mStart").disabled = false;
@@ -288,15 +296,8 @@ function startMath(opts) {
   }
   if (pass) {
     mEl("mTitle").textContent = "🎟️ 刷題換通行卷";
-    mEl("mRules").innerHTML =
-      "<li>連續答對 <b>" + PASS_STREAK + " 題</b>換 <b>1 張 🎟️ 通行卷</b>,馬上入帳</li>" +
-      "<li>答錯或離開,連對次數就從 0 開始</li>" +
-      "<li>每答對 1 題得 <b>15~20 金幣</b>(難題 20)</li>" +
-      "<li>今天答對 1 題就算<b>上線</b>:7 天裡上線 3、5、7 天得 <b>⭐星光代幣</b></li>" +
-      "<li>不計時,刷夠了按「結束」</li>";
-    mEl("mStart").textContent = "開始刷題!";
     mEl("mDbl").style.display = M.dbl ? "block" : "none";
-    mHud();
+    buildPassModes();
     return;
   }
   mEl("mTitle").textContent = "📝 " + durText(MATH_SECS) + "數學挑戰";
@@ -335,7 +336,8 @@ function mTick() {
   if (M.left <= 0) mFinish();
 }
 function mHud() {
-  mEl("mRight").textContent = "✅ " + M.right;
+  mEl("mRight").textContent =
+    "✅ " + M.right + (M.timed ? (M.passes ? " 🎟️" : " / " + PASS_TIMED) : "");
   mEl("mCoins").textContent = "💰 " + M.coins;
   mEl("mStreak").textContent = "🔥 " + M.streak;
   if (M.pass) {
@@ -381,8 +383,10 @@ function mSubmit() {
     M.right++;
     M.streak++;
     if (!M.practice) M.coins += M.cur.c * (M.dbl ? 2 : 1);
-    const ci = M.pass ? streakCheckIn() : null; // 今天第一次答對:記一天上線
+    const ci = M.pass || M.timed ? streakCheckIn() : null; // 今天第一次答對:記一天上線
     if (ci) M.checkin = ci;
+    const crit = !M.practice && !M.pass && M.streak % CRIT_EVERY === 0;
+    if (crit) M.crits++;
     mDraw("ok");
     sfxPlay(!M.practice && M.streak % CRIT_EVERY === 0 ? "crit" : "ding");
     if (M.practice) {
@@ -393,13 +397,17 @@ function mSubmit() {
       M.passes++;
       fx.textContent = "🎟️ 換到 1 張通行卷!(這次已換 " + M.passes + " 張)";
       fx.className = "crit";
+    } else if (M.timed && M.right === PASS_TIMED) {
+      addPasses(1); // 達標馬上入帳
+      M.passes = 1;
+      fx.textContent = "🎟️ 達標!換到 1 張通行卷!" + (crit ? " ⚡ 還觸發能量暴擊!" : "");
+      fx.className = "crit";
     } else if (ci) {
       fx.textContent = ci.got
         ? "📅 今天上線了!這一輪第 " + ci.n + " 天,得到 " + ci.got + " 枚 ⭐ 星光代幣!"
         : "📅 今天上線了!這一輪第 " + ci.n + " 天";
       fx.className = ci.got ? "crit" : "ok";
-    } else if (!M.pass && M.streak % CRIT_EVERY === 0) {
-      M.crits++;
+    } else if (crit) {
       fx.textContent = "⚡ 能量暴擊!連續答對 " + M.streak + " 題";
       fx.className = "crit";
     } else {
@@ -458,7 +466,8 @@ function mFinish() {
     ? [["📝 練習模式", "雖然沒有獎勵，但你超棒！"]]
     : [["💰 答題金幣", "+" + base]];
   if (M.dbl) rows.push(["🃏 雙倍卡 ×2", "+" + base]);
-  if (M.pass) rows.push(["🎟️ 換到通行卷(已入帳)", "+" + M.passes]);
+  if (M.pass || (M.timed && M.passes)) rows.push(["🎟️ 換到通行卷(已入帳)", "+" + M.passes]);
+  else if (M.timed) rows.push(["🎟️ 通行卷", "還差 " + (PASS_TIMED - M.right) + " 題,再挑戰一次!"]);
   if (M.checkin)
     rows.push(
       M.checkin.got
@@ -525,6 +534,46 @@ mEl("mrOk").onclick = () => {
   M = null;
   afterMath(); // 在好友房間就回房間,否則回首頁(room.js)
 };
+
+// ── 刷題換通行卷:選模式 ──
+function buildPassModes() {
+  const el = mEl("mModes");
+  el.innerHTML =
+    '<button data-m="streak">🔥 連對模式<small>連續答對 ' + PASS_STREAK + " 題換 1 張<br>不計時,可以一直換</small></button>" +
+    '<button data-m="timed">⏱️ 限時模式<small>' + durText(MATH_SECS) + "內答對 " + PASS_TIMED + " 題換 1 張<br>答錯不歸零</small></button>";
+  el.querySelectorAll("button").forEach((b) => (b.onclick = () => passMode(b.dataset.m)));
+  passMode("streak");
+}
+function passMode(m) {
+  M.pass = m === "streak";
+  M.timed = !M.pass;
+  mEl("mModes")
+    .querySelectorAll("button")
+    .forEach((b) => b.classList.toggle("on", b.dataset.m === m));
+  const common =
+    "<li>每答對 1 題得 <b>15~20 金幣</b>(難題 20)</li>" +
+    "<li>今天答對 1 題就算<b>上線</b>:7 天裡上線 3、5、7 天得 <b>⭐星光代幣</b></li>";
+  if (M.pass) {
+    mEl("mRules").innerHTML =
+      "<li>連續答對 <b>" + PASS_STREAK + " 題</b>換 <b>1 張 🎟️ 通行卷</b>,馬上入帳</li>" +
+      "<li>答錯或離開,連對次數就從 0 開始</li>" +
+      common +
+      "<li>不計時,刷夠了按「結束」</li>";
+    mEl("mStart").textContent = "開始刷題!";
+    mHud();
+  } else {
+    mEl("mRules").innerHTML =
+      "<li>" + durText(MATH_SECS) + "內答對 <b>" + PASS_TIMED + " 題</b>換 <b>1 張 🎟️ 通行卷</b>,達標馬上入帳</li>" +
+      "<li>答錯不會歸零,把握時間繼續答</li>" +
+      "<li>連續答對 " + CRIT_EVERY + " 題觸發 <b>⚡能量暴擊</b></li>" +
+      common;
+    mEl("mStart").textContent = "準備好了,開始!";
+    mEl("mTime").textContent = ((MATH_SECS / 60) | 0) + ":" + String(MATH_SECS % 60).padStart(2, "0");
+    mEl("mBar").style.width = "100%";
+    mEl("mBar").className = "";
+    mHud();
+  }
+}
 
 // ── 數學練習:選單元 ──
 function buildUnitChips() {

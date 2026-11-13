@@ -629,7 +629,6 @@ button:focus-visible {
 /* ===== 首頁:今日勝場、等級徽章 ===== */
 #hDaily {
   pointer-events: auto; /* 讓滑鼠移過去可以看到說明(title) */
-  cursor: help;
   display: flex;
   flex-direction: column;
   align-items: center;

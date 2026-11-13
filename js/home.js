@@ -2,7 +2,7 @@
 const home = document.getElementById("home");
 // 錢包文字,ks 例如 "cet" = 金幣、能量、代幣
 function wallet(ks) {
-  const m = { c: "💰 " + money, e: "⚡ " + P.energy, t: "⭐ " + P.tokens };
+  const m = { c: "💰 " + money, e: "⚡ " + P.energy, t: "⭐ " + P.tokens, p: "🎟️ " + P.passes };
   return ks
     .split("")
     .map((k) => m[k])
@@ -31,8 +31,17 @@ function updHome() {
   document.getElementById("hTut").classList.toggle("hint", !P.tutDone);
   document.getElementById("hMenu").classList.toggle("hint", !P.tutDone); // 練習在選單裡,選單按鈕也閃
   if (typeof updUnlocks === "function") updUnlocks(); // 功能慢慢解鎖(onboarding.js)
-  const pl = document.getElementById("play");
-  pl.textContent = P.mathPending ? "📝 先做數學" : "出擊!";
+  document.getElementById("hPass").textContent = "🎟️ " + P.passes;
+  document.getElementById("play").textContent = "出擊!";
+}
+// 首頁的一行提示(例如通行卷用完了),幾秒後自動消失
+let tipTimer = 0;
+function homeTip(text) {
+  const el = document.getElementById("hTip");
+  el.textContent = text;
+  el.style.display = "";
+  clearTimeout(tipTimer);
+  tipTimer = setTimeout(() => (el.style.display = "none"), 4000);
 }
 function showHome() {
   homeOn = true;
@@ -49,10 +58,16 @@ function leaveHome() {
   home.style.display = "none";
 }
 // 開始比賽;還沒做完上一場的數學挑戰就先去做
+// 開始一場單機比賽:用掉 1 張通行卷;沒有通行卷就提醒去刷題
 function startMatch() {
-  if (P.mathPending) return startMath();
   if (!isUnlocked(pick)) return;
-  save();
+  if (!spendPass()) {
+    showHome();
+    homeTip("🎟️ 通行卷用完了!按「刷題換通行卷」,連續答對 5 題就能換 1 張。");
+    document.getElementById("hPassMath").classList.add("hint");
+    return;
+  }
+  document.getElementById("hPassMath").classList.remove("hint");
   [ui, shopScr, sdetail, roster, detail].forEach((el) => (el.style.display = "none"));
   detailOn = false;
   leaveHome();
@@ -60,6 +75,7 @@ function startMatch() {
   mouse.down = false;
 }
 document.getElementById("play").onclick = startMatch;
+document.getElementById("hPassMath").onclick = () => startMath({ pass: true });
 // 首頁右下角的版本號(開發環境另外標示)
 document.getElementById("ver").textContent =
   "v" + APP_VERSION + (ENV_NAME === "development" ? " · dev" : "");

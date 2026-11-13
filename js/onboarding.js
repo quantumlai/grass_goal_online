@@ -5,7 +5,7 @@ const UNLOCKS = [
   {
     k: "shop",
     els: ["hShop", "hMoney"],
-    need: () => P.played >= 1 && !P.mathPending, // 第 1 場打完、做完數學(拿到第一筆金幣)
+    need: () => P.played >= 1 && !P.mathPending, // 第 1 場打完(mathPending 在通行卷規則下一律是 false)
     hint: "🛒 商店開放了!用金幣讓角色變強。",
     btn: "hShop",
   },

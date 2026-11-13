@@ -69,7 +69,7 @@ function renderMe() {
   aEl("aMeName").textContent = acct.name || "(還沒設定名稱)";
   document.querySelector("#aMe .meav").innerHTML = avatarSVG(myAvatar(), 80);
   aEl("aMeEmail").textContent = acct.email;
-  aEl("aMeWallet").textContent = wallet("ce");
+  aEl("aMeWallet").innerHTML = wealthHTML();
   econUI();
 }
 
@@ -265,3 +265,15 @@ aEl("aMeAva").onclick = () => openAvatar();
 if (acct) econUseCached(); // 先用上次的餘額顯示,自動登入後再同步
 updAcctBtn();
 restoreLogin();
+
+// 我的帳號:個人財富(LootLocker 錢包的貨幣,加上存在這台裝置的代幣、升級券)
+function wealthHTML() {
+  const rows = [
+    ["💰", "金幣", money],
+    ["⚡", "戰力能量", P.energy],
+    ["🎟️", "通行卷", P.passes],
+    ["⭐", "星光代幣", P.tokens],
+    ["🎫", "升級券", P.vouchers],
+  ];
+  return rows.map(([i, n, v]) => `<div><span>${i}</span><small>${n}</small><b>${v}</b></div>`).join("");
+}

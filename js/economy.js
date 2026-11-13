@@ -30,7 +30,7 @@ function econPush(op) {
   econFlush();
 }
 
-// ── 遊戲裡加減金幣、能量都走這四個函式 ──
+// ── 遊戲裡加減金幣、能量、通行卷都走這些函式 ──
 function addCoins(n) {
   if (n <= 0) return;
   money += n;
@@ -50,6 +50,20 @@ function spendCoins(n) {
   econAfterChange();
   return true;
 }
+function addPasses(n) {
+  if (n <= 0) return;
+  P.passes += n;
+  if (econ.online) econPush({ t: "credit", c: "pass", n });
+  econAfterChange();
+}
+// 用掉 1 張通行卷(開始一場足球比賽時)
+function spendPass() {
+  if (P.passes < 1) return false;
+  P.passes -= 1;
+  if (econ.online) econPush({ t: "debit", c: "pass", n: 1 });
+  econAfterChange();
+  return true;
+}
 function spendEnergy(n) {
   if (P.energy < n) return false;
   P.energy -= n;
@@ -64,7 +78,7 @@ function lbAdd(key, ds, dm) {
 }
 function econAfterChange() {
   if (econ.online && acct) {
-    acct.bal = { money, energy: P.energy };
+    acct.bal = { money, energy: P.energy, passes: P.passes };
     store.set(ACCT_KEY, acct);
   }
   save();
@@ -147,6 +161,7 @@ async function econRefresh() {
       .reduce((s, o) => s + (o.t === "credit" ? o.n : -o.n), 0);
   money = amt(econCur.coins) + pend("coins");
   P.energy = amt(econCur.energy) + pend("energy");
+  P.passes = amt(econCur.pass) + pend("pass");
   econAfterChange();
   econUI();
 }
@@ -154,11 +169,12 @@ async function econRefresh() {
 // ── 登入、登出 ──
 // 重新打開網頁、還有記住的登入時:先用上次的餘額顯示,等同步完成再更新
 function econUseCached() {
-  econ.guest = { money, energy: P.energy };
+  econ.guest = { money, energy: P.energy, passes: P.passes };
   econ.online = true;
   econQLoad();
   money = (acct.bal && acct.bal.money) || 0;
   P.energy = (acct.bal && acct.bal.energy) || 0;
+  P.passes = (acct.bal && acct.bal.passes) || 0;
 }
 // 登入成功後呼叫:找貨幣與錢包 → 轉入裝置上的金幣能量 → 送出佇列 → 讀餘額
 async function econSync() {
@@ -171,9 +187,10 @@ async function econSync() {
     const norm = (c) => String(c || "").trim().toUpperCase();
     const find = (code) => list.find((c) => norm(c.code) === norm(code));
     const cc = find(ECON.coins),
-      ce = find(ECON.energy);
-    if (!cc || !ce) {
-      const missing = [!cc && ECON.coins, !ce && ECON.energy].filter(Boolean).join("、");
+      ce = find(ECON.energy),
+      cp = find(ECON.pass);
+    if (!cc || !ce || !cp) {
+      const missing = [!cc && ECON.coins, !ce && ECON.energy, !cp && ECON.pass].filter(Boolean).join("、");
       const got = list.map((c) => c.code + (c.published === false ? "(未發佈)" : "")).join("、");
       console.warn("LootLocker 回傳的貨幣:", list);
       throw new LLError(
@@ -189,9 +206,9 @@ async function econSync() {
           "_ 開頭)對應的環境。",
       );
     }
-    econCur = { coins: cc.id, energy: ce.id };
-    const noWrite = [cc, ce].filter((c) => c.game_api_writes_enabled === false).map((c) => c.code);
-    if (noWrite.length) econ.warn = "貨幣 " + noWrite.join("、") + " 還沒開啟 Game API 寫入,金幣能量無法存進帳號。";
+    econCur = { coins: cc.id, energy: ce.id, pass: cp.id };
+    const noWrite = [cc, ce, cp].filter((c) => c.game_api_writes_enabled === false).map((c) => c.code);
+    if (noWrite.length) econ.warn = "貨幣 " + noWrite.join("、") + " 還沒開啟 Game API 寫入,金幣、能量、通行卷無法存進帳號。";
     if (!acct.walletId) {
       try {
         acct.walletId = (await withSession((s) => llWalletByHolder(s, acct.playerUlid))).id;
@@ -201,18 +218,22 @@ async function econSync() {
       }
       store.set(ACCT_KEY, acct);
     }
-    // 轉入裝置上的金幣和能量(放進佇列,轉成功之前不會遺失)
-    const g = econ.online ? econ.guest : { money, energy: P.energy };
+    // 轉入裝置上的金幣、能量、通行卷(放進佇列,轉成功之前不會遺失)
+    const g = econ.online ? econ.guest : { money, energy: P.energy, passes: P.passes };
     if (!econ.online) econQLoad();
     if (g.money > 0) econ.queue.push({ t: "credit", c: "coins", n: g.money, guest: 1 });
     if (g.energy > 0) econ.queue.push({ t: "credit", c: "energy", n: g.energy, guest: 1 });
+    if (g.passes > 0) econ.queue.push({ t: "credit", c: "pass", n: g.passes, guest: 1 });
     econQSave();
-    econ.guest = { money: 0, energy: 0 };
+    const giftCame = P.giftPending; // 這次轉入的通行卷裡包含這台裝置的見面禮
+    P.giftPending = false;
+    econ.guest = { money: 0, energy: 0, passes: 0 };
     econ.online = true;
     econ.ready = true;
     save();
     await econFlush();
     await econRefresh();
+    await passGiftSync(giftCame);
     econ.state = "ok";
   } catch (e) {
     econ.state = "err";
@@ -237,8 +258,9 @@ function econLogout() {
   if (wasOnline) {
     money = econ.guest.money;
     P.energy = econ.guest.energy;
+    P.passes = econ.guest.passes || 0;
   }
-  econ.guest = { money: 0, energy: 0 };
+  econ.guest = { money: 0, energy: 0, passes: 0 };
   econ.queue = [];
   save();
   econUI();
@@ -248,7 +270,7 @@ function econUI() {
   if (typeof updHome === "function" && home.style.display !== "none") updHome();
   const el = document.getElementById("aMeSync");
   if (!el) return;
-  if (acct) document.getElementById("aMeWallet").textContent = wallet("ce");
+  if (acct) document.getElementById("aMeWallet").innerHTML = wealthHTML();
   const n = econ.queue.length;
   el.className = "amsg" + (econ.warn ? " err" : econ.state === "ok" && !n ? " ok" : "");
   el.textContent =
@@ -258,7 +280,7 @@ function econUI() {
       : n
         ? "☁️ 還有 " + n + " 筆資料等待上傳"
         : econ.state === "ok"
-          ? "☁️ 金幣、能量、排行榜都已同步"
+          ? "☁️ 金幣、能量、通行卷、排行榜都已同步"
           : "");
 }
 
@@ -295,5 +317,20 @@ function avatarUpload() {
     withSession((s) => llStorageSet(s, [{ key: "avatar", value: v, is_public: true, order: 1 }])).catch((e) =>
       console.warn("頭像上傳失敗", e.message),
     );
+  }
+}
+
+// ── 通行卷見面禮(每個帳號一次) ──
+// 帳號的玩家儲存空間記一個 "pss_gift";沒有這個標記就補 5 張(已經建立帳號的人第一次登入也會拿到)。
+// 這次登入剛好把裝置的見面禮轉進來的話,就不再另外送。
+const PASS_GIFT = 5;
+async function passGiftSync(giftCame) {
+  try {
+    const r = await withSession((s) => llStorageGet(s));
+    if ((r.payload || []).some((p) => p.key === "pss_gift")) return;
+    await withSession((s) => llStorageSet(s, [{ key: "pss_gift", value: "1", is_public: false, order: 2 }]));
+    if (!giftCame) addPasses(PASS_GIFT);
+  } catch (e) {
+    console.warn("檢查通行卷見面禮失敗,下次登入再試", e.message);
   }
 }

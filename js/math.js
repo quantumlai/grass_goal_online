@@ -240,8 +240,11 @@ const mathScr = mEl("math"),
 let M = null,
   mTimer = 0;
 // 開始數學挑戰。opts.practice = true 是「數學練習」:不計時、沒有獎勵、可以選單元
+// opts.pass = true 是「刷題換通行卷」:不計時,連續答對 PASS_STREAK 題換 1 張通行卷,答錯或離開就歸零
+const PASS_STREAK = 5;
 function startMath(opts) {
-  const practice = !!(opts && opts.practice === true);
+  const practice = !!(opts && opts.practice === true),
+    pass = !!(opts && opts.pass === true);
   homeOn = true; // 讓遊戲輸入不攔截觸控
   [home, ui, shopScr, sdetail, roster, detail, mresScr].forEach(
     (el) => (el.style.display = "none"),
@@ -262,6 +265,8 @@ function startMath(opts) {
     lock: false,
     dbl: practice ? false : P.dbl,
     practice,
+    pass,
+    passes: 0, // 這次刷題換到幾張通行卷
     units: null, // 練習時選的單元(null = 全部)
   };
   mathScr.style.display = "flex";
@@ -279,6 +284,19 @@ function startMath(opts) {
     mEl("mBar").style.width = "100%";
     mEl("mDbl").style.display = "none";
     buildUnitChips();
+    mHud();
+    return;
+  }
+  if (pass) {
+    mEl("mTitle").textContent = "🎟️ 刷題換通行卷";
+    mEl("mRules").innerHTML =
+      "<li>連續答對 <b>" + PASS_STREAK + " 題</b>換 <b>1 張 🎟️ 通行卷</b>,馬上入帳</li>" +
+      "<li>答錯或離開,連對次數就從 0 開始</li>" +
+      "<li>每答對 1 題得 <b>15~20 金幣</b>(難題 20)</li>" +
+      "<li>這次答對 <b>" + TOKEN_AT + " 題以上</b>得到 <b>⭐星光代幣</b></li>" +
+      "<li>不計時,刷夠了按「結束」</li>";
+    mEl("mStart").textContent = "開始刷題!";
+    mEl("mDbl").style.display = M.dbl ? "block" : "none";
     mHud();
     return;
   }
@@ -302,8 +320,9 @@ function mBegin() {
   mEl("mPlay").style.display = ""; // 版面交給 CSS(橫式手機會改成左右排)
   mNext();
   clearInterval(mTimer);
-  if (M.practice) {
-    mEl("mEnd").style.display = ""; // 練習不計時,自己按「結束練習」
+  if (M.practice || M.pass) {
+    mEl("mEnd").style.display = ""; // 練習、刷題不計時,自己按「結束」
+    mEl("mEnd").textContent = M.pass ? "結束刷題" : "結束練習";
     return;
   }
   mTimer = setInterval(mTick, 200);
@@ -321,6 +340,13 @@ function mHud() {
   mEl("mRight").textContent = "✅ " + M.right;
   mEl("mCoins").textContent = "💰 " + M.coins;
   mEl("mStreak").textContent = "🔥 " + M.streak;
+  if (M.pass) {
+    // 上方的進度條改成「連對幾題 / 5」
+    const k = M.streak % PASS_STREAK;
+    mEl("mTime").textContent = "連對 " + k + " / " + PASS_STREAK + " · 已換 " + M.passes + " 張 🎟️";
+    mEl("mBar").style.width = (k / PASS_STREAK) * 100 + "%";
+    mEl("mBar").className = "";
+  }
 }
 function mNext() {
   M.cur = genQ(M.practice ? M.units : null);
@@ -362,7 +388,12 @@ function mSubmit() {
     if (M.practice) {
       fx.textContent = M.streak >= 3 ? "答對了!連續 " + M.streak + " 題 🔥" : "答對了!";
       fx.className = "ok";
-    } else if (M.streak % CRIT_EVERY === 0) {
+    } else if (M.pass && M.streak % PASS_STREAK === 0) {
+      addPasses(1); // 馬上入帳,就算之後離開也不會不見
+      M.passes++;
+      fx.textContent = "🎟️ 換到 1 張通行卷!(這次已換 " + M.passes + " 張)";
+      fx.className = "crit";
+    } else if (!M.pass && M.streak % CRIT_EVERY === 0) {
       M.crits++;
       fx.textContent = "⚡ 能量暴擊!連續答對 " + M.streak + " 題";
       fx.className = "crit";
@@ -417,11 +448,12 @@ function mFinish() {
   const base = M.dbl ? M.coins / 2 : M.coins;
   mEl("mrBig").innerHTML =
     "<b>" + M.right + "</b><small>答對題數(共作答 " + M.total + " 題)</small>";
-  mresScr.querySelector("h2").textContent = M.practice ? "📝 練習結束" : "⏰ 時間到!";
+  mresScr.querySelector("h2").textContent = M.practice ? "📝 練習結束" : M.pass ? "🎟️ 刷題結束" : "⏰ 時間到!";
   const rows = M.practice
     ? [["📝 練習模式", "雖然沒有獎勵，但你超棒！"]]
     : [["💰 答題金幣", "+" + base]];
   if (M.dbl) rows.push(["🃏 雙倍卡 ×2", "+" + base]);
+  if (M.pass) rows.push(["🎟️ 換到通行卷(已入帳)", "+" + M.passes]);
   if (!M.practice)
     rows.push(
       M.right >= TOKEN_AT
@@ -518,4 +550,4 @@ function unitStartUI() {
   mEl("mStart").disabled = n === 0;
   mEl("mStart").textContent = n === 0 ? "先選一個單元" : "開始練習";
 }
-mEl("mEnd").onclick = () => M && M.practice && mFinish();
+mEl("mEnd").onclick = () => M && (M.practice || M.pass) && mFinish();

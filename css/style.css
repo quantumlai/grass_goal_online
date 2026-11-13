@@ -2281,3 +2281,105 @@ button.new::after {
     padding: 3px 10px;
   }
 }
+
+/* ===== 通行卷 ===== */
+.hrow3 {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+#hPassMath {
+  font-size: 15px;
+  padding: 6px 14px;
+}
+#hPassMath.hint {
+  background: var(--accent);
+  color: #3a2a00;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+#hPass {
+  border-color: #fde68a;
+}
+#hTip {
+  background: #ffe4e6;
+  color: #7f1d1d;
+  border-radius: 12px;
+  padding: 4px 12px;
+  font-size: 14px;
+  font-weight: 800;
+  max-width: calc(100vw - 32px);
+  text-align: center;
+}
+/* 比賽結束的按鈕 */
+.rbtns {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  width: min(320px, 100%);
+}
+#rAgain {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+#rAgain small {
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.8;
+}
+#rMath {
+  font-size: 18px;
+}
+#rHome {
+  align-self: center;
+  font-size: 14px;
+  padding: 5px 14px;
+}
+/* 我的帳號:個人財富 */
+.wealth {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+  gap: 6px;
+  width: 100%;
+  margin-top: 6px;
+}
+.wealth div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  padding: 6px 4px;
+}
+.wealth span {
+  font-size: 20px;
+}
+.wealth small {
+  font-size: 11px;
+  opacity: 0.8;
+}
+.wealth b {
+  font-size: 18px;
+  color: var(--accent);
+}
+@media (max-height: 520px) {
+  #hPassMath {
+    font-size: 12px;
+    padding: 3px 10px;
+  }
+  .rbtns {
+    gap: 5px;
+  }
+  #rMath,
+  #rAgain {
+    font-size: 15px;
+    padding: 8px 14px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #hPassMath.hint {
+    animation: none;
+  }
+}

@@ -34,7 +34,7 @@ function afterMath() {
 }
 
 // ── 房間列表 ──
-const STATUS = { lobby: "✅ 準備好了", math: "📝 做數學中", play: "⚽ 比賽中" };
+const STATUS = { lobby: "✅ 準備好了", math: "📝 刷題中", play: "⚽ 比賽中", nopass: "🎟️ 沒有通行卷" };
 function roomUI() {
   if (!roomOn()) return;
   rEl("rmCodeShow").textContent = PR.getRoomCode() || "";
@@ -86,22 +86,22 @@ function roomUI() {
   const c = CH[pick];
   rEl("rmHero").innerHTML =
     c.icon + " " + c.name + "<small>" + TEAMN[c.team] + " · " + ROLES[c.role] + " · Lv." + heroLv(pick) + "</small>";
-  // 開始比賽:只有房主能按,而且大家都準備好(沒有數學挑戰沒做完)
+  // 開始比賽:只有房主能按,而且大家都準備好(每個人都有通行卷,沒有人在刷題)
   const host = PR.isHost(),
     allReady = ps.length > 0 && ps.every(({ prof }) => prof.ready && prof.st === "lobby");
-  rEl("rmMath").style.display = P.mathPending ? "" : "none";
+  rEl("rmMath").style.display = P.passes < 1 ? "" : "none";
   rEl("rmGo").style.display = host ? "" : "none";
   rEl("rmGo").disabled = !allReady;
   rEl("rmNote").className = "amsg" + (room.note ? " err" : "");
   rEl("rmNote").textContent =
     room.note ||
-    (P.mathPending
-      ? "先完成數學挑戰,才能開始下一場。"
+    (P.passes < 1
+      ? "🎟️ 你的通行卷用完了,刷數學題換一張才能一起玩。"
       : host
         ? allReady
-          ? "大家都準備好了,可以開始!"
-          : "等大家都準備好(做完數學)就能開始。"
-        : "等待房主開始比賽…");
+          ? "大家都準備好了,可以開始!(每人用 1 張通行卷)"
+          : "等大家都準備好(有通行卷、沒有在刷題)就能開始。"
+        : "等待房主開始比賽…(會用 1 張通行卷)");
 }
 
 // ── 表情與短語 ──
@@ -229,7 +229,7 @@ rEl("rmGo").onclick = () => {
   room.note = "";
   hostStartMatch();
 };
-rEl("rmMath").onclick = startMath;
+rEl("rmMath").onclick = () => startMath({ pass: true });
 rEl("rmPrev").onclick = () => {
   stepPick(-1);
   syncProfile();

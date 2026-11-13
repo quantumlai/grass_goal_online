@@ -11,7 +11,7 @@
 // 不要把 LootLocker 後台的 server key 或帳號密碼放進這個檔案。
 // LootLocker 後台建立的經濟系統貨幣代碼與排行榜 key(開發、正式環境共用;不同的話再分開寫)
 const LL_ECONOMY = {
-  currencies: { coins: "CIN", energy: "PPT" }, // 金幣、戰力能量
+  currencies: { coins: "CIN", energy: "PPT", pass: "PSS" }, // 金幣、戰力能量、通行卷
   leaderboards: {
     math: "grass_goal_online_math", // 分數 = 累計答對題數,metadata = 累計答題數
     wins: "grass_goal_online_wins", // 分數 = 累計勝場數,metadata = 累計出賽數

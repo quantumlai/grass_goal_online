@@ -37,7 +37,7 @@ function onMatchEnd(res) {
   if (res === "win") {
     P.daily.wins++;
     P.dbl = true;
-    notes.push("🃏 <b>雙倍卡啟動!</b>接下來的數學挑戰,每題金幣 ×2");
+    notes.push("🃏 <b>雙倍卡啟動!</b>下次刷題,每題金幣 ×2");
     if (P.daily.wins >= 3 && !P.daily.m3) {
       P.daily.m3 = true;
       P.tokens++;
@@ -49,7 +49,6 @@ function onMatchEnd(res) {
       notes.push("🎫 <b>今日 5 勝!</b>獲得升級券:任選一位英雄免費升一級");
     }
   }
-  P.mathPending = true;
   save();
   mEl("rTitle").textContent =
     res === "win" ? "🏆 你贏了!" : res === "tie" ? "🤝 平手" : "💪 下次再加油";
@@ -64,10 +63,27 @@ function onMatchEnd(res) {
     "</div>" +
     dailyHTML() +
     notes.map((n) => '<p class="note">' + n + "</p>").join("") +
-    '<p class="hint">完成 ' + durText(MATH_SECS) + "數學挑戰,就能領金幣、繼續下一場!</p>";
+    (P.passes < 1 ? '<p class="note">🎟️ <b>通行卷用完了!</b>刷數學題,連續答對 5 題就能換 1 張。</p>' : "");
+  resultButtons();
   ui.style.display = "flex";
 }
-mEl("go").onclick = startMath;
+// 比賽結束的按鈕:有通行卷才有「再玩一場」;好友房間裡改成「回房間」(由房主開下一場)
+function resultButtons() {
+  const inRoom = typeof room !== "undefined" && room.active;
+  mEl("rAgain").style.display = inRoom || P.passes < 1 ? "none" : "";
+  mEl("rAgainSub").textContent = "用 1 張通行卷(剩 " + P.passes + " 張)";
+  mEl("rHome").textContent = inRoom ? "回房間" : "回首頁";
+}
+mEl("rAgain").onclick = () => {
+  ui.style.display = "none";
+  startMatch();
+};
+mEl("rMath").onclick = () => startMath({ pass: true });
+mEl("rHome").onclick = () => {
+  ui.style.display = "none";
+  if (typeof room !== "undefined" && room.active) showRoom();
+  else showHome();
+};
 
 // ── 英雄養成 ──
 function unlockHero(ci) {

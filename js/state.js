@@ -45,7 +45,10 @@ const P = {
   accEq: null, // 裝備中的配件
   skins: [], // 已解鎖的造型
   skinEq: {}, // {角色索引: 造型 k}
-  mathPending: false, // 打完比賽還沒做數學挑戰
+  mathPending: false, // (舊規則)打完比賽要先做數學;改成通行卷後一律為 false
+  passes: 0, // 🎟️ 通行卷:1 張玩 1 場足球(登入後存在 LootLocker 的 PSS)
+  passGift: false, // 這台裝置送過 5 張見面禮了
+  giftPending: false, // 見面禮還沒轉進任何帳號(登入時轉入,帳號就不再另外送)
   tutDone: false, // 做完過一次遊戲練習
   dbl: false, // 下一場數學挑戰金幣 ×2
   daily: { date: "", wins: 0, m3: false, m5: false },
@@ -71,7 +74,7 @@ function save() {
   P.pick = pick;
   // 登入期間只把裝置上的那份寫進存檔,避免帳號的錢在登出後被複製到裝置上
   const sv = econ.online
-    ? { v: 2, money: econ.guest.money, up, P: { ...P, energy: econ.guest.energy } }
+    ? { v: 2, money: econ.guest.money, up, P: { ...P, energy: econ.guest.energy, passes: econ.guest.passes } }
     : { v: 2, money, up, P };
   try {
     localStorage.setItem("brawlSave", JSON.stringify(sv));
@@ -116,6 +119,14 @@ function makeMods(lo) {
 }
 const NEUTRAL_MODS = makeMods({});
 let pick = isUnlocked(P.pick) ? P.pick : P.unlocked[0];
+// 通行卷規則上線:不再強制「打完比賽先做數學」;第一次打開(含舊存檔)送 5 張見面禮
+P.mathPending = false;
+if (!P.passGift) {
+  P.passes = (P.passes || 0) + 5;
+  P.passGift = true;
+  P.giftPending = true;
+  save(); // 要在 pick 宣告之後(save 會用到 pick)
+}
 const RL = ["守", "後", "中", "前"],
   ROLES = ["守門員", "後衛", "中場", "前鋒"];
 // 角色頭上的名字:自己加「你·」,其他真人玩家加上他的名稱

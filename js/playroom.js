@@ -103,8 +103,8 @@ const myName = () =>
   "玩家" + (10 + ([...PR.myPlayer().id].reduce((s, c) => s * 31 + c.charCodeAt(0), 7) >>> 0) % 90);
 function myStatus() {
   if (room.inMatch) return "play";
-  if (mathScr.style.display !== "none" || mresScr.style.display !== "none" || P.mathPending)
-    return "math";
+  if (mathScr.style.display !== "none" || mresScr.style.display !== "none") return "math";
+  if (P.passes < 1) return "nopass"; // 沒有通行卷,不能準備
   return "lobby";
 }
 // 名稱、英雄、配置、狀態有變就送出去(最多每 0.5 秒一次)
@@ -115,7 +115,7 @@ function syncProfile(force) {
     ci: pick,
     loadout: myLoadout(),
     avatar: myAvatar(), // 頭像(別人收到後會經過 avClean 檢查)
-    ready: !P.mathPending,
+    ready: P.passes >= 1, // 開賽時每人扣 1 張通行卷
     st: myStatus(),
   };
   const j = JSON.stringify(prof);
@@ -269,6 +269,7 @@ function buildFromInit(m) {
 
 // ── 比賽流程 ──
 function enterMatch() {
+  spendPass(); // 每位玩家在自己的裝置扣 1 張(房主開賽前已確認大家都有)
   room.inMatch = true;
   room.seen = {};
   room.snapSeen = -1;

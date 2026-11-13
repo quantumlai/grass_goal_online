@@ -13,7 +13,7 @@ function updHome() {
   document.getElementById("hMoney").textContent = "💰 " + money;
   document.getElementById("hEnergy").textContent = "⚡ " + P.energy;
   document.getElementById("hTokens").textContent = "⭐ " + P.tokens;
-  document.getElementById("hDaily").innerHTML = dailyHTML();
+  document.getElementById("hDaily").innerHTML = streakHTML() + dailyHTML();
   document.getElementById("hName").innerHTML =
     c.icon +
     " " +

@@ -11,7 +11,7 @@
 // 不要把 LootLocker 後台的 server key 或帳號密碼放進這個檔案。
 // LootLocker 後台建立的經濟系統貨幣代碼與排行榜 key(開發、正式環境共用;不同的話再分開寫)
 const LL_ECONOMY = {
-  currencies: { coins: "CIN", energy: "PPT", pass: "PSS", "star": "SAR" }, // 金幣、戰力能量、通行卷
+  currencies: { coins: "CIN", energy: "PPT", pass: "PSS", star: "SAR" }, // 金幣、戰力能量、通行卷、星光代幣
   leaderboards: {
     math: "grass_goal_online_math", // 分數 = 累計答對題數,metadata = 累計答題數
     wins: "grass_goal_online_wins", // 分數 = 累計勝場數,metadata = 累計出賽數
@@ -20,8 +20,8 @@ const LL_ECONOMY = {
 const ENVS = {
   development: {
     name: "開發環境",
-    // 測試用:比賽、數學挑戰都縮短成 30 秒(星光代幣門檻跟正式環境一樣 12 題)
-    timing: { matchSecs: 30, mathSecs: 30, tokenAt: 12 },
+    // 測試用:比賽、數學挑戰都縮短成 30 秒
+    timing: { matchSecs: 30, mathSecs: 30 },
     lootlocker: {
       apiDomain: "https://w3meemf6.api.lootlocker.com",
       domainKey: "w3meemf6",
@@ -31,8 +31,8 @@ const ENVS = {
   },
   production: {
     name: "正式環境",
-    // 比賽 3 分鐘、數學挑戰 2 分鐘,單次答對 12 題拿星光代幣
-    timing: { matchSecs: 180, mathSecs: 120, tokenAt: 12 },
+    // 比賽 3 分鐘、數學挑戰 2 分鐘
+    timing: { matchSecs: 180, mathSecs: 120 },
     lootlocker: {
       // 正式環境用另一個獨立的 LootLocker 遊戲。後台的 White Label、貨幣、排行榜要在這個遊戲裡另外設定一次。
       apiDomain: "https://1jjsx26h.api.lootlocker.com",

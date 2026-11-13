@@ -29,9 +29,9 @@ function infoHTML() {
     {
       ic: "⭐",
       n: "星光代幣",
-      get: `一次刷題<b>答對 ${TOKEN_AT} 題以上</b>得 1 枚;當天打贏 3 場得 1 枚`,
+      get: `<b>常回來玩</b>:${STREAK_DAYS} 天裡上線第 3、5、7 天,各得 1、1、2 枚(不用連續)。當天刷題答對 1 題就算上線`,
       use: `<b>解鎖新英雄</b>(${UNLOCK_TOKENS} 枚)、<b>解鎖造型</b>(${UNLOCK_TOKENS} 枚)。不會讓角色變強,是讓你有更多選擇`,
-      where: "這台裝置",
+      where: "LootLocker 帳號(SAR)",
     },
     {
       ic: "🎫",

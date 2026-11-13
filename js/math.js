@@ -1,7 +1,6 @@
 // 數學挑戰(正式環境 2 分鐘):題庫(小學三年級上學期)與作答流程
 const MATH_SECS = TIMING.mathSecs, // 見 config.js
   CRIT_EVERY = 5, // 連續答對幾題觸發能量暴擊
-  TOKEN_AT = TIMING.tokenAt, // 單次答對幾題得到星光代幣,見 config.js
   CRIT_ENERGY = 30,
   CRIT_COINS = 50;
 const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
@@ -293,7 +292,7 @@ function startMath(opts) {
       "<li>連續答對 <b>" + PASS_STREAK + " 題</b>換 <b>1 張 🎟️ 通行卷</b>,馬上入帳</li>" +
       "<li>答錯或離開,連對次數就從 0 開始</li>" +
       "<li>每答對 1 題得 <b>15~20 金幣</b>(難題 20)</li>" +
-      "<li>這次答對 <b>" + TOKEN_AT + " 題以上</b>得到 <b>⭐星光代幣</b></li>" +
+      "<li>今天答對 1 題就算<b>上線</b>:7 天裡上線 3、5、7 天得 <b>⭐星光代幣</b></li>" +
       "<li>不計時,刷夠了按「結束」</li>";
     mEl("mStart").textContent = "開始刷題!";
     mEl("mDbl").style.display = M.dbl ? "block" : "none";
@@ -301,7 +300,6 @@ function startMath(opts) {
     return;
   }
   mEl("mTitle").textContent = "📝 " + durText(MATH_SECS) + "數學挑戰";
-  mEl("mTokenAt").textContent = TOKEN_AT + " 題以上";
   mEl("mTime").textContent = ((MATH_SECS / 60) | 0) + ":" + String(MATH_SECS % 60).padStart(2, "0");
   mEl("mBar").style.width = "100%";
   mEl("mIntro").style.display = "flex";
@@ -383,6 +381,8 @@ function mSubmit() {
     M.right++;
     M.streak++;
     if (!M.practice) M.coins += M.cur.c * (M.dbl ? 2 : 1);
+    const ci = M.pass ? streakCheckIn() : null; // 今天第一次答對:記一天上線
+    if (ci) M.checkin = ci;
     mDraw("ok");
     sfxPlay(!M.practice && M.streak % CRIT_EVERY === 0 ? "crit" : "ding");
     if (M.practice) {
@@ -393,6 +393,11 @@ function mSubmit() {
       M.passes++;
       fx.textContent = "🎟️ 換到 1 張通行卷!(這次已換 " + M.passes + " 張)";
       fx.className = "crit";
+    } else if (ci) {
+      fx.textContent = ci.got
+        ? "📅 今天上線了!這一輪第 " + ci.n + " 天,得到 " + ci.got + " 枚 ⭐ 星光代幣!"
+        : "📅 今天上線了!這一輪第 " + ci.n + " 天";
+      fx.className = ci.got ? "crit" : "ok";
     } else if (!M.pass && M.streak % CRIT_EVERY === 0) {
       M.crits++;
       fx.textContent = "⚡ 能量暴擊!連續答對 " + M.streak + " 題";
@@ -454,11 +459,11 @@ function mFinish() {
     : [["💰 答題金幣", "+" + base]];
   if (M.dbl) rows.push(["🃏 雙倍卡 ×2", "+" + base]);
   if (M.pass) rows.push(["🎟️ 換到通行卷(已入帳)", "+" + M.passes]);
-  if (!M.practice)
+  if (M.checkin)
     rows.push(
-      M.right >= TOKEN_AT
-        ? ["⭐ 星光代幣(答對 " + TOKEN_AT + " 題以上)", "+1"]
-        : ["⭐ 星光代幣", "再答對 " + (TOKEN_AT - M.right) + " 題就能拿到"],
+      M.checkin.got
+        ? ["⭐ 上線第 " + M.checkin.n + " 天(已入帳)", "+" + M.checkin.got]
+        : ["📅 今天上線了", "這一輪第 " + M.checkin.n + " 天"],
     );
   if (!acct && !M.practice) rows.push(["🏆 排行榜", "登入後成績才會記錄"]);
   mEl("mrList").innerHTML = rows
@@ -514,7 +519,6 @@ mEl("mrOk").onclick = () => {
   );
   if (critPick === "energy") addEnergy(CRIT_ENERGY * M.crits);
   lbAdd(LB.math, M.right, M.total); // 答對題數、答題數累加到排行榜
-  if (M.right >= TOKEN_AT) P.tokens++;
   P.dbl = false;
   P.mathPending = false;
   save();

@@ -51,7 +51,8 @@ const P = {
   giftPending: false, // 見面禮還沒轉進任何帳號(登入時轉入,帳號就不再另外送)
   tutDone: false, // 做完過一次遊戲練習
   dbl: false, // 下一場數學挑戰金幣 ×2
-  daily: { date: "", wins: 0, m3: false, m5: false },
+  daily: { date: "", wins: 0, m5: false },
+  streak: { start: "", days: [] }, // 上線獎勵:這一輪從哪天開始、哪幾天有上線(見 rewards.js)
   pick: 0,
 };
 try {
@@ -60,12 +61,12 @@ try {
   Object.assign(up, sv.up || {});
   if (sv.P) Object.assign(P, sv.P);
 } catch (err) {}
-// 金幣、能量的來源:沒登入時用這台裝置的(money、P.energy);
+// 金幣、能量、通行卷、星光代幣的來源:沒登入時用這台裝置的(money、P.energy、P.passes、P.tokens);
 // 登入後 money、P.energy 改成顯示 LootLocker 錢包的餘額,裝置上的那份暫存在 econ.guest(見 economy.js)
 const econ = {
   online: false, // 目前是否使用帳號錢包
   ready: false, // 貨幣 ID 與錢包 ID 都已取得,可以送出交易
-  guest: { money: 0, energy: 0 },
+  guest: { money: 0, energy: 0, passes: 0, tokens: 0 },
   queue: [], // 還沒送到 LootLocker 的交易與排行榜更新
   state: "", // "" | "sync" | "ok" | "err"
   warn: "",
@@ -74,7 +75,7 @@ function save() {
   P.pick = pick;
   // 登入期間只把裝置上的那份寫進存檔,避免帳號的錢在登出後被複製到裝置上
   const sv = econ.online
-    ? { v: 2, money: econ.guest.money, up, P: { ...P, energy: econ.guest.energy, passes: econ.guest.passes } }
+    ? { v: 2, money: econ.guest.money, up, P: { ...P, energy: econ.guest.energy, passes: econ.guest.passes || 0, tokens: econ.guest.tokens || 0 } }
     : { v: 2, money, up, P };
   try {
     localStorage.setItem("brawlSave", JSON.stringify(sv));

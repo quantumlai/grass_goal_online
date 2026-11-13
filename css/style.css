@@ -630,6 +630,10 @@ button:focus-visible {
 #hDaily {
   pointer-events: auto; /* 讓滑鼠移過去可以看到說明(title) */
   cursor: help;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
 }
 .daily {
   display: flex;

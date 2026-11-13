@@ -550,4 +550,10 @@ function unitStartUI() {
   mEl("mStart").disabled = n === 0;
   mEl("mStart").textContent = n === 0 ? "先選一個單元" : "開始練習";
 }
+// 說明頁的「返回」:還沒開始作答就離開(沒有任何獎勵,也不扣任何東西)
+mEl("mBack").onclick = () => {
+  M = null;
+  mathScr.style.display = "none";
+  afterMath();
+};
 mEl("mEnd").onclick = () => M && (M.practice || M.pass) && mFinish();

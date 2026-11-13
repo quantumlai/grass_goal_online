@@ -59,6 +59,7 @@
         <button id="hMathP" class="mitem">📝 數學練習<small>不計時,先看看題目</small></button>
         <button id="hRoom" class="mitem">👥 開房間<small>找朋友一起玩</small></button>
         <button id="hAva" class="mitem">🎨 我的頭像<small>自己組合臉、眼睛、帽子…</small></button>
+        <button id="hInfo" class="mitem">📖 獎勵說明<small>金幣、通行卷、星光代幣…是做什麼的</small></button>
         <button id="mnSet" class="mitem">⚙️ 設定<small>背景音樂、音效</small></button>
         <button id="hAcct" class="mitem">👤 帳號<small>登入、註冊、登出</small></button>
       </div>
@@ -79,6 +80,15 @@
       <div id="avTabs"></div>
       <div id="avOpts"></div>
       <button id="avSave">儲存</button>
+    </div>
+    <!-- 獎勵說明(info.js) -->
+    <div id="info" style="display: none">
+      <div class="rtop">
+        <button id="infoBack" class="ch">⬅ 返回</button>
+        <h2>📖 獎勵說明</h2>
+        <span></span>
+      </div>
+      <div id="infoBody"></div>
     </div>
     <div id="shopscr" style="display: none">
       <div class="rtop">
@@ -194,6 +204,7 @@
           <b id="aMeName"></b>
           <small id="aMeEmail"></small>
           <div id="aMeWallet" class="wealth"></div>
+          <button id="aMeInfo" class="link">這些是做什麼的?</button>
         </div>
         <div id="aMeSync" class="amsg" role="status" aria-live="polite"></div>
         <div id="aMeMsg" class="amsg" role="status" aria-live="polite"></div>
@@ -273,6 +284,7 @@
         <div id="mDbl">🃏 雙倍卡生效中:每題金幣 ×2</div>
       </div>
       <div id="mIntro">
+        <button id="mBack" class="ch">⬅ 返回</button>
         <h2 id="mTitle">📝 數學挑戰</h2>
         <div id="mUnits" style="display: none"></div>
         <ul id="mRules">
@@ -324,6 +336,7 @@
     <script src="js/onboarding.js"></script>
     <script src="js/sound.js"></script>
     <script src="js/menu.js"></script>
+    <script src="js/info.js"></script>
     <script src="js/main.js"></script>
   </body>
 </html>

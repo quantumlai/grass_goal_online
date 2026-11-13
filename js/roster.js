@@ -103,7 +103,7 @@ function buildRoster() {
         b.appendChild(sm);
         const lb = document.createElement("span");
         lb.className = "lvtag";
-        lb.textContent = lk ? "🔒" : "Lv." + heroLv(i);
+        lb.textContent = lk ? "🔒 ⭐" + UNLOCK_TOKENS : "Lv." + heroLv(i);
         b.appendChild(lb);
         if (i === pick) {
           const k = document.createElement("span");

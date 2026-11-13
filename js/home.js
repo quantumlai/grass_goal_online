@@ -46,7 +46,7 @@ function homeTip(text) {
 function showHome() {
   homeOn = true;
   if (typeof tutStop === "function") tutStop(); // 從練習回首頁
-  [ui, shopScr, sdetail, roster, detail, mathScr, mresScr, acctScr, roomScr].forEach(
+  [ui, shopScr, sdetail, roster, detail, mathScr, mresScr, acctScr, roomScr, infoScr].forEach(
     (el) => (el.style.display = "none"),
   );
   detailOn = false;

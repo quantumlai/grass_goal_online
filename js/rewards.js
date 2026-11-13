@@ -15,11 +15,21 @@ function ensureDaily() {
 function dailyHTML() {
   ensureDaily();
   const w = P.daily.wins;
-  let h = '<div class="daily"><span>今日勝場</span><div class="dbar">';
+  // title:滑鼠移過去時的說明(手機看不到沒關係)
+  const tip = (i) =>
+    i === 3
+      ? "今日第 3 勝:得到 1 枚 ⭐ 星光代幣(解鎖英雄、造型)"
+      : i === 5
+        ? "今日第 5 勝:得到 1 張 🎫 升級券(任選一位英雄免費升一級)"
+        : "今日第 " + i + " 勝";
+  let h =
+    '<div class="daily" title="今日勝場:每天重新計算,打贏 3 場、5 場有獎勵"><span>今日勝場</span><div class="dbar">';
   for (let i = 1; i <= DAILY_GOAL; i++)
     h +=
       '<i class="' +
       (i <= w ? "on" : "") +
+      '" title="' +
+      tip(i) +
       '">' +
       (i === 3 ? "⭐" : i === 5 ? "🎫" : "") +
       "</i>";

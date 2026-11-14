@@ -337,8 +337,8 @@ function update(dt, inputs) {
       bl.y = Math.max(bl.r, Math.min(H - bl.r, bl.y));
     }
   }
-  // 結束:結算交給 rewards.js(比賽獎勵 → 數學挑戰)。練習(tutorial.js)不結算
-  if (!G.practice && (G.t <= 0 || G.score[0] >= 3 || G.score[1] >= 3)) {
+  // 結束:不管比數,一律打滿時間(TIMING.matchSecs)。結算交給 rewards.js。練習(tutorial.js)不結算
+  if (!G.practice && G.t <= 0) {
     G.over = true;
     const me = G.ents[G.me],
       sm = G.score[me.tm],

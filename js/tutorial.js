@@ -131,7 +131,7 @@ function tutUI(good) {
   if (TUT.done) {
     tutEl.className = "done";
     tutEl.innerHTML =
-      "<h3>🎉 練習完成!</h3><p>你已經會移動、攻擊、帶球、射門和放大招了!<br>對方球門進 3 球就贏,也可以用翻滾躲子彈、用超能力幫忙。</p>" +
+      "<h3>🎉 練習完成!</h3><p>你已經會移動、攻擊、帶球、射門和放大招了!<br>時間到時進球多的隊伍贏,也可以用翻滾躲子彈、用超能力幫忙。</p>" +
       '<div class="tutbtns"><button data-a="again" class="ch">再練一次</button><button data-a="play">開始比賽</button><button data-a="home" class="ch">回首頁</button></div>';
   } else if (TUT.mini) {
     // 收起:只剩一個小標籤,點一下展開重看說明

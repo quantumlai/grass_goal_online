@@ -2000,6 +2000,39 @@ button.link {
   color: #3a2a00;
   animation: none;
 }
+/* 設定:電腦強度(三選一) */
+.mseg {
+  cursor: default;
+  gap: 10px;
+}
+.mseg > span {
+  display: flex;
+  flex-direction: column;
+}
+.mseg small {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.8;
+}
+#setAi {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+#setAi button {
+  font-size: 15px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #555;
+  color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: none;
+}
+#setAi button.on {
+  background: #4ade80;
+  color: #0b3d1e;
+  border-color: #fff;
+}
 /* 開關 */
 .mtoggle {
   display: flex;

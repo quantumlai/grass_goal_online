@@ -418,6 +418,7 @@ function stepAI(e, dt) {
   e.hitT = Math.max(0, e.hitT - dt);
   e.cd -= dt;
   e.ai.t -= dt;
+  const lv = e.ai.lv || AI_LV.hard; // 電腦強度(見 state.js 的 AI_LV)
   let tgt = null,
     bd = Math.max(320, e.c.rng + 20);
   for (const o of G.ents) {
@@ -456,7 +457,7 @@ function stepAI(e, dt) {
     }
   }
   if (e.ai.t <= 0) {
-    e.ai.t = 0.2 + Math.random() * 0.2;
+    e.ai.t = lv.think[0] + Math.random() * lv.think[1];
     if (e.hp < 35 && tgt) {
       const a = Math.atan2(e.y - tgt.y, e.x - tgt.x);
       e.ai.tx = e.x + Math.cos(a) * 200;
@@ -518,7 +519,7 @@ function stepAI(e, dt) {
       Math.hypot(bl2.x - e.x, bl2.y - e.y) < e.r + bl2.r + 26
     ) {
       const ka = Math.atan2(
-        H / 2 + (Math.random() - 0.5) * (GOAL_Y1 - GOAL_Y0) * 0.37 - bl2.y, // 瞄準球門口中間
+        H / 2 + (Math.random() - 0.5) * (GOAL_Y1 - GOAL_Y0) * lv.kick - bl2.y, // 瞄準球門口中間(越弱飄越多)
         gx2 - bl2.x,
       );
       e.ang = ka;
@@ -530,15 +531,16 @@ function stepAI(e, dt) {
     e.ai.tx - e.x,
     e.ai.ty - e.y,
     dt,
-    (e.c.sp - 30) * (e.haste > 0 ? 1.5 : 1) * (e.slow > 0 ? 0.5 : 1),
+    (e.c.sp - 30) * lv.spd * (e.haste > 0 ? 1.5 : 1) * (e.slow > 0 ? 0.5 : 1),
   );
   if (tgt) {
     e.ang =
       Math.atan2(tgt.y - e.y, tgt.x - e.x) +
-      (Math.random() - 0.5) * 0.25;
-    if (!(e.rcd > 0) && e.hp < e.max * 0.5 && bd < 220)
+      (Math.random() - 0.5) * lv.aim;
+    if (lv.roll && !(e.rcd > 0) && e.hp < e.max * 0.5 && bd < 220)
       doRoll(e, e.x - tgt.x, e.y - tgt.y);
-    if (!(e.acd > 0)) {
+    // 技能好了不一定馬上放:abil 越低,平均等越久(弱約 2 秒、中約 0.8 秒)
+    if (!(e.acd > 0) && (lv.abil >= 1 || Math.random() < lv.abil * dt * 2)) {
       const k = e.c.k;
       if (
         (k === "gun" && bd < 260) ||
@@ -567,7 +569,7 @@ function stepAI(e, dt) {
         shoot(e, e.ang, 0);
         e.sup += 8;
       }
-      e.cd = e.c.cd * (e.rapid > 0 ? 0.5 : 1.5) + Math.random() * 0.3;
+      e.cd = e.c.cd * (e.rapid > 0 ? 0.5 : lv.fire) + Math.random() * 0.3;
     }
   }
 }

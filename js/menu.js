@@ -20,7 +20,24 @@ document.getElementById("mnSet").onclick = () => {
   document.getElementById("mnMain").style.display = "none";
   document.getElementById("mnSettings").style.display = "";
   sndUI();
+  aiUI();
 };
+// 電腦強度:弱 / 中 / 強(下一場比賽開始時套用;好友房間用房主的設定)
+function aiUI() {
+  const el = document.getElementById("setAi"),
+    cur = aiLevel();
+  el.innerHTML = Object.entries(AI_LV)
+    .map(([k, v]) => `<button type="button" role="radio" aria-checked="${k === cur}" data-k="${k}" class="${k === cur ? "on" : ""}">${v.n}</button>`)
+    .join("");
+  el.querySelectorAll("button").forEach(
+    (b) =>
+      (b.onclick = () => {
+        P.aiLv = b.dataset.k;
+        save();
+        aiUI();
+      }),
+  );
+}
 document.getElementById("mnBack").onclick = () => {
   document.getElementById("mnSettings").style.display = "none";
   document.getElementById("mnMain").style.display = "";

@@ -61,13 +61,17 @@
         <button id="hRoom" class="mitem">👥 開房間<small>找朋友一起玩</small></button>
         <button id="hAva" class="mitem">🎨 我的頭像<small>自己組合臉、眼睛、帽子…</small></button>
         <button id="hInfo" class="mitem">📖 獎勵說明<small>金幣、通行卷、星光代幣…是做什麼的</small></button>
-        <button id="mnSet" class="mitem">⚙️ 設定<small>背景音樂、音效</small></button>
+        <button id="mnSet" class="mitem">⚙️ 設定<small>背景音樂、音效、電腦強度</small></button>
         <button id="hAcct" class="mitem">👤 帳號<small>登入、註冊、登出</small></button>
       </div>
       <div class="mpanel" id="mnSettings" style="display: none">
         <div class="mhead"><button id="mnBack" class="ch">⬅ 返回</button><b>⚙️ 設定</b><span></span></div>
         <label class="mtoggle"><span>🎵 背景音樂</span><input type="checkbox" id="setMusic" /><i></i></label>
         <label class="mtoggle"><span>🔊 音效</span><input type="checkbox" id="setSfx" /><i></i></label>
+        <div class="mtoggle mseg">
+          <span>🤖 電腦強度<small>只影響對手的電腦</small></span>
+          <div id="setAi" role="radiogroup" aria-label="電腦強度"></div>
+        </div>
       </div>
     </div>
     <!-- 頭像編輯器(avatar.js) -->

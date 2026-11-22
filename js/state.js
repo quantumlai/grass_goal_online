@@ -50,6 +50,7 @@ const P = {
   passGift: false, // 這台裝置送過 5 張見面禮了
   giftPending: false, // 見面禮還沒轉進任何帳號(登入時轉入,帳號就不再另外送)
   tutDone: false, // 做完過一次遊戲練習
+  aiLv: "mid", // 電腦強度:easy / mid / hard(設定頁,見 AI_LV)
   dbl: 0, // 雙倍卡:下一次刷題金幣 ×2,最多 1 張(登入後存在 LootLocker 的 XX2)
   daily: { date: "", wins: 0, m5: false },
   streak: { start: "", days: [] }, // 上線獎勵:這一輪從哪天開始、哪幾天有上線(見 rewards.js)
@@ -166,6 +167,15 @@ function makeMods(lo) {
   };
 }
 const NEUTRAL_MODS = makeMods({});
+// 電腦強度(設定頁選,存在 P.aiLv;預設「中」)。hard 就是原本的電腦。
+// spd 移動速度、aim 瞄準亂飄(弧度)、fire 射擊間隔倍率、think 多久重新判斷一次(秒,最少 + 隨機)、
+// abil 放技能的積極度(1 = 一好就放)、roll 會不會翻滾躲、kick 射門亂飄(球門高度的比例)、hp 血量、dmg 子彈傷害
+const AI_LV = {
+  easy: { n: "弱", spd: 0.8, aim: 0.7, fire: 2.4, think: [0.5, 0.4], abil: 0.25, roll: false, kick: 1.1, hp: 0.8, dmg: 0.7 },
+  mid: { n: "中", spd: 0.9, aim: 0.45, fire: 1.9, think: [0.3, 0.3], abil: 0.6, roll: true, kick: 0.7, hp: 0.9, dmg: 0.85 },
+  hard: { n: "強", spd: 1, aim: 0.25, fire: 1.5, think: [0.2, 0.2], abil: 1, roll: true, kick: 0.37, hp: 1, dmg: 1 },
+};
+const aiLevel = () => (AI_LV[P.aiLv] ? P.aiLv : "mid");
 let pick = isUnlocked(P.pick) ? P.pick : P.unlocked[0];
 // 換了一份進度(登入、登出)後,目前選的英雄可能還沒解鎖
 function fixPick() {
@@ -286,6 +296,16 @@ function reset(players = Net.players()) {
       return mk(i, s.tm ? W - f.x : f.x, f.y, s.ci, s.tm, s.role, s.pl);
     }),
   );
+  // 電腦強度只套用在「沒有真人的那一隊」;真人的電腦隊友維持原本(強)。
+  // 好友房間由房主跑電腦,所以用房主的設定;兩隊都有真人時,兩邊的電腦都是原本的強度。
+  const humanTm = new Set(G.ents.filter((e) => e.pid != null).map((e) => e.tm));
+  for (const e of G.ents) {
+    if (e.pid != null) continue;
+    const lv = humanTm.has(e.tm) ? AI_LV.hard : AI_LV[aiLevel()];
+    e.ai.lv = lv;
+    e.mods = { ...NEUTRAL_MODS, hp: lv.hp, atk: lv.dmg - 1 };
+    e.hp = e.max = e.c.hp * lv.hp;
+  }
 }
 // 一場比賽的完整狀態(G)
 function makeG(ents) {

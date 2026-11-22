@@ -14,7 +14,8 @@ const soundOn = () => P.sound !== false;
 
 function sfxInit() {
   if (SFX.ctx) {
-    if (SFX.ctx.state === "suspended") SFX.ctx.resume();
+    // iPad / iPhone 切到背景、鎖螢幕、來電之後會變成 "suspended" 或 "interrupted"(Safari 特有),都要叫醒
+    if (SFX.ctx.state !== "running") SFX.ctx.resume().catch(() => {});
     return;
   }
   const AC = window.AudioContext || window.webkitAudioContext;
@@ -44,7 +45,7 @@ function sfxInit() {
     ev,
     () => {
       sfxInit();
-      if (typeof musicTick === "function") musicTick();
+      if (typeof musicTick === "function") musicTick(true); // 點畫面時一定重試(瀏覽器只在使用者操作時讓聲音開始)
     },
     { passive: true },
   ),
@@ -172,24 +173,41 @@ function musicEl(k) {
   MUSIC.els[k] = a;
   return a;
 }
-// 每一幀呼叫:決定現在該播哪一首,有變才切換
-function musicTick() {
-  const want =
-    !musicOn() || !SFX.ctx || document.hidden
-      ? null
-      : mathScr.style.display !== "none" || mresScr.style.display !== "none"
-        ? "math"
-        : "game";
-  if (want === MUSIC.cur) return;
-  if (MUSIC.cur) MUSIC.els[MUSIC.cur].pause();
-  MUSIC.cur = want;
-  if (!want) return;
-  const a = musicEl(want);
-  a.currentTime = 0;
-  const p = a.play();
-  if (p && p.catch) p.catch(() => (MUSIC.cur = null)); // 瀏覽器還不讓播,下次點擊後再試
+// 每一幀呼叫:決定現在該播哪一首,有變才切換;該播卻沒在播(被系統暫停)就重試。
+// fromGesture:這次是使用者點畫面觸發的,一定重試;其他時候最多每 2 秒試一次
+let musicRetry = 0;
+function musicTick(fromGesture) {
+  const ctx = SFX.ctx,
+    want =
+      !musicOn() || !ctx || document.hidden
+        ? null
+        : mathScr.style.display !== "none" || mresScr.style.display !== "none"
+          ? "math"
+          : "game";
+  if (want !== MUSIC.cur) {
+    if (MUSIC.cur) MUSIC.els[MUSIC.cur].pause();
+    MUSIC.cur = want;
+    if (!want) return;
+    musicEl(want).currentTime = 0;
+    fromGesture = true; // 換曲:馬上播,不用等
+  } else if (!want) return;
+  const a = musicEl(want),
+    live = ctx.state === "running"; // 音樂接在 Web Audio 上,AudioContext 沒在跑就是沒聲音
+  if (!a.paused && live) return; // 正常播放中
+  // 以前只在「換曲」時呼叫一次 play():iPad 從背景回來、鎖螢幕、來電後,系統把音樂暫停或把 AudioContext
+  // 變成 suspended / interrupted,程式卻以為還在播,就一直沒有音樂。現在每次檢查到就叫醒。
+  const now = performance.now();
+  if (!fromGesture && now - musicRetry < 2000) return;
+  musicRetry = now;
+  if (!live) ctx.resume().catch(() => {});
+  if (a.paused) {
+    const p = a.play();
+    if (p && p.catch) p.catch(() => {}); // 瀏覽器還不讓播:下次點畫面或 2 秒後再試
+  }
 }
-addEventListener("visibilitychange", musicTick); // 切到別的 App 時暫停
+addEventListener("visibilitychange", () => musicTick()); // 切到別的 App 時暫停,回來時重新播
+// 頁面從快取還原(上一頁 / 下一頁)時只會觸發 pageshow,保險起見也檢查一次
+addEventListener("pageshow", () => musicTick());
 
 // ── 開關:設定頁(音樂、音效分開)、比賽中的全部靜音 ──
 function sndUI() {
@@ -217,7 +235,7 @@ function setAudio(music, sfxOn) {
   sfxInit();
   if (sfxOn) sfxPlay("ding");
   sndUI();
-  musicTick();
+  musicTick(true); // 設定頁的開關是使用者點的
 }
 // 比賽中的按鈕:有任何聲音就全部關掉,全部關著就全部打開
 document.getElementById("sndBtn").onclick = (ev) => {

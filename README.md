@@ -238,6 +238,8 @@
 | 其他（首頁、比賽、遊戲練習…） | `game.mp3` |
 
 - 用到哪一首才下載；切到別的 App 或關掉螢幕時會暫停。
+- 該播卻沒在播時會自動重試（`musicTick`）：iPad / iPhone 從背景回來、鎖螢幕、來電之後，系統會暫停音樂、把 Web Audio 變成 `suspended` / `interrupted`。點一下畫面一定會重試，其他時候每 2 秒試一次。瀏覽器規定聲音要在使用者操作後才能開始，所以有時要點一下畫面音樂才回來。
+- iPhone 的靜音開關打開時沒有音樂和音效（Web Audio 會跟著靜音開關）。
 - 用 `http(s)://` 開啟時，音量透過 Web Audio 控制（iPhone 不能直接調 `<audio>` 的音量）；直接開 `index.html` 檔案時用一般方式播放。
 - 換曲子：把檔案放進 `assets/music/`，改 `MUSIC.tracks`；音量改 `MUSIC.vol`。
 

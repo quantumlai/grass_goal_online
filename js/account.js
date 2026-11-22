@@ -22,7 +22,7 @@ const store = {
     } catch (e) {}
   },
 };
-// acct = { email, name, playerId, publicUid, wlToken(記住我), session(遊戲 session) }
+// acct = { email, name, playerId, publicUid, wlToken(記住我), session(遊戲 session), bal / prog(餘額、進度的快取) }
 let acct = store.get(ACCT_KEY);
 if (acct && !acct.wlToken) acct = null; // 舊版只存了 Email 的資料,不算登入
 const escHtml = (s) =>
@@ -103,6 +103,7 @@ async function finishLogin(email, wlToken) {
     publicUid: s.public_uid,
     walletId: s.wallet_id || (same ? acct.walletId : undefined),
     bal: same ? acct.bal : undefined,
+    prog: same ? acct.prog : undefined, // 帳號進度的快取(見 economy.js 的 progChanged)
     wlToken,
     session: s.session_token,
   };

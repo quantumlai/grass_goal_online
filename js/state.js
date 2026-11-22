@@ -55,6 +55,33 @@ const P = {
   streak: { start: "", days: [] }, // 上線獎勵:這一輪從哪天開始、哪幾天有上線(見 rewards.js)
   pick: 0,
 };
+// ── 進度:登入後存到 LootLocker 玩家儲存空間的 "progress"(見 economy.js 的 progSync) ──
+// 商店升級、英雄等級、已解鎖英雄 / 配件 / 造型、裝備、上線紀錄、今日勝場。
+// 這些是用帳號的金幣、能量、代幣換來的,只存在裝置上的話,iPad 清掉資料就會「錢花了、東西不見」。
+const PROG_KEYS = ["lv", "unlocked", "acc", "accEq", "skins", "skinEq", "streak", "daily"];
+const clone = (o) => JSON.parse(JSON.stringify(o));
+const progGet = () => clone({ up, ...Object.fromEntries(PROG_KEYS.map((k) => [k, P[k]])) });
+const PROG_DEFAULT = progGet(); // 全新玩家的進度(讀存檔之前先記下來)
+function progSet(o) {
+  o = clone(o || PROG_DEFAULT);
+  for (const k in up) up[k] = (o.up && o.up[k]) || 0;
+  for (const k of PROG_KEYS) P[k] = o[k] !== undefined && o[k] !== null ? o[k] : clone(PROG_DEFAULT[k]);
+}
+// 這台裝置能不能存檔:Safari 的「阻擋所有 Cookie」、無痕模式等會讓 localStorage 無法使用
+const STORAGE_OK = (() => {
+  try {
+    localStorage.setItem("brawlTest", "1");
+    const ok = localStorage.getItem("brawlTest") === "1";
+    localStorage.removeItem("brawlTest");
+    return ok;
+  } catch (e) {
+    return false;
+  }
+})();
+// 請瀏覽器不要在空間不足時自動清掉這個網站的資料(瀏覽器可以拒絕,拒絕也沒關係)
+try {
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+} catch (e) {}
 try {
   const sv = JSON.parse(localStorage.getItem("brawlSave") || "{}");
   money = sv.money || 0;
@@ -68,19 +95,38 @@ const econ = {
   online: false, // 目前是否使用帳號錢包
   ready: false, // 貨幣 ID 與錢包 ID 都已取得,可以送出交易
   guest: { money: 0, energy: 0, passes: 0, tokens: 0, vouchers: 0, dbl: 0 },
+  guestProg: null, // 登入期間:裝置上(沒登入時)的進度,登出後換回來
+  progReady: false, // 這次登入已經把帳號進度讀下來、合併好了,之後才把變更送上去
   queue: [], // 還沒送到 LootLocker 的交易與排行榜更新
   state: "", // "" | "sync" | "ok" | "err"
   warn: "",
 };
 function save() {
   P.pick = pick;
-  // 登入期間只把裝置上的那份寫進存檔,避免帳號的錢在登出後被複製到裝置上
-  const sv = econ.online
-    ? { v: 2, money: econ.guest.money, up, P: { ...P, energy: econ.guest.energy, passes: econ.guest.passes || 0, tokens: econ.guest.tokens || 0, vouchers: econ.guest.vouchers || 0, dbl: econ.guest.dbl || 0 } }
-    : { v: 2, money, up, P };
+  // 登入期間只把裝置上的那份寫進存檔,避免帳號的錢和進度在登出後被複製到裝置上
+  let sv;
+  if (econ.online) {
+    const g = econ.guest,
+      gp = econ.guestProg || PROG_DEFAULT;
+    sv = {
+      v: 2,
+      money: g.money,
+      up: gp.up,
+      P: {
+        ...P,
+        ...Object.fromEntries(PROG_KEYS.map((k) => [k, gp[k]])),
+        energy: g.energy,
+        passes: g.passes || 0,
+        tokens: g.tokens || 0,
+        vouchers: g.vouchers || 0,
+        dbl: g.dbl || 0,
+      },
+    };
+  } else sv = { v: 2, money, up, P };
   try {
     localStorage.setItem("brawlSave", JSON.stringify(sv));
   } catch (err) {}
+  if (typeof progChanged === "function") progChanged(); // 登入中:進度送到帳號(economy.js)
 }
 const heroLv = (ci) => P.lv[ci] || 1;
 const isUnlocked = (ci) => P.unlocked.includes(ci);
@@ -121,6 +167,10 @@ function makeMods(lo) {
 }
 const NEUTRAL_MODS = makeMods({});
 let pick = isUnlocked(P.pick) ? P.pick : P.unlocked[0];
+// 換了一份進度(登入、登出)後,目前選的英雄可能還沒解鎖
+function fixPick() {
+  if (!isUnlocked(pick)) pick = P.unlocked[0];
+}
 // 通行卷規則上線:不再強制「打完比賽先做數學」;第一次打開(含舊存檔)送 5 張見面禮
 P.mathPending = false;
 if (!P.passGift) {

@@ -142,8 +142,10 @@ async function withSession(fn) {
 }
 async function econRun(op) {
   if (op.t === "store") {
-    // 玩家儲存空間(頭像);公開資料,之後排行榜也能顯示別人的頭像
-    return withSession((s) => llStorageSet(s, [{ key: op.key, value: op.v, is_public: true, order: 1 }]));
+    // 玩家儲存空間:頭像(公開,之後排行榜也能顯示別人的頭像)、進度(pub: false,不公開)
+    return withSession((s) =>
+      llStorageSet(s, [{ key: op.key, value: op.v, is_public: op.pub !== false, order: op.order || 1 }]),
+    );
   }
   if (op.t === "credit" || op.t === "debit") {
     const f = op.t === "credit" ? llCredit : llDebit;
@@ -216,6 +218,10 @@ async function econRefresh() {
 // 重新打開網頁、還有記住的登入時:先用上次的餘額顯示,等同步完成再更新
 function econUseCached() {
   econ.guest = { money, energy: P.energy, passes: P.passes, tokens: P.tokens, vouchers: P.vouchers, dbl: P.dbl };
+  econ.guestProg = progGet();
+  econ.progReady = false;
+  if (acct.prog) progSet(acct.prog); // 上次登入時帳號的進度
+  fixPick();
   econ.online = true;
   econQLoad();
   money = (acct.bal && acct.bal.money) || 0;
@@ -280,10 +286,25 @@ async function econSync() {
       }
       store.set(ACCT_KEY, acct);
     }
+    // 帳號的玩家儲存空間:進度、見面禮標記
+    const stor = {};
+    for (const p of (await withSession((s) => llStorageGet(s))).payload || []) stor[p.key] = p.value;
     // 轉入裝置上的金幣、能量、通行卷、星光代幣、升級券、雙倍卡(放進佇列,轉成功之前不會遺失)
     const g = econ.online
       ? econ.guest
       : { money, energy: P.energy, passes: P.passes, tokens: P.tokens, vouchers: P.vouchers, dbl: P.dbl };
+    // 帳號已經拿過見面禮,這台裝置的見面禮(還沒用掉的部分)就不再轉入。
+    // 避免 iPad 資料被清掉 → 又送一次見面禮 → 登入後一直累積
+    if (stor.pss_gift && P.giftPending) g.passes -= Math.min(PASS_GIFT, g.passes || 0);
+    // 進度:帳號的 + 裝置上的 + 這次打開後在上次帳號進度上做的變更,合併在一起
+    let remote = null;
+    try {
+      remote = stor.progress ? JSON.parse(stor.progress) : null;
+    } catch (e) {
+      console.warn("帳號進度格式不對,改用裝置上的", e.message);
+    }
+    const gp = econ.online ? econ.guestProg : progGet();
+    const merged = progMerge(progMerge(remote, gp), progGet());
     if (!econ.online) econQLoad();
     if (g.money > 0) econ.queue.push({ t: "credit", c: "coins", n: g.money, guest: 1 });
     if (g.energy > 0) econ.queue.push({ t: "credit", c: "energy", n: g.energy, guest: 1 });
@@ -295,9 +316,17 @@ async function econSync() {
     const giftCame = P.giftPending; // 這次轉入的通行卷裡包含這台裝置的見面禮
     P.giftPending = false;
     econ.guest = { money: 0, energy: 0, passes: 0, tokens: 0, vouchers: 0, dbl: 0 };
+    progSet(merged);
+    fixPick();
+    econ.guestProg = clone(PROG_DEFAULT); // 裝置上的進度已經併進帳號,登出後從頭開始(跟金幣一樣)
+    acct.prog = merged;
+    store.set(ACCT_KEY, acct);
+    progSent = stor.progress || null;
+    econ.progReady = true;
     econ.online = true;
     econ.ready = true;
     save();
+    progPush(); // 合併後跟帳號上的不一樣才會送
     await econFlush();
     await econRefresh();
     await passGiftSync(giftCame);
@@ -329,8 +358,14 @@ function econLogout() {
     P.tokens = econ.guest.tokens || 0;
     P.vouchers = econ.guest.vouchers || 0;
     P.dbl = econ.guest.dbl || 0;
+    progSet(econ.guestProg);
+    fixPick();
   }
   econ.guest = { money: 0, energy: 0, passes: 0, tokens: 0, vouchers: 0, dbl: 0 };
+  econ.guestProg = null;
+  econ.progReady = false;
+  progSent = null;
+  clearTimeout(progTimer);
   econ.queue = [];
   save();
   econUI();
@@ -352,6 +387,64 @@ function econUI() {
         : econ.state === "ok"
           ? "☁️ 金幣、能量、通行卷、代幣、排行榜都已同步"
           : "");
+}
+
+// ── 進度同步(玩家儲存空間的 "progress",不公開) ──
+// 登入時在 econSync 讀下來並合併;之後每次存檔(save)都會呼叫 progChanged,停 1.5 秒沒有新變更就送出最新的一份。
+let progSent = null, // 上一次送出(或從帳號讀到)的內容,一樣就不重送
+  progTimer = 0;
+function progChanged() {
+  if (!econ.online || !acct) return;
+  acct.prog = progGet(); // 下次打開先用這份顯示
+  store.set(ACCT_KEY, acct);
+  if (!econ.progReady) return; // 還沒跟帳號合併過,先不要蓋掉帳號上的進度
+  clearTimeout(progTimer);
+  progTimer = setTimeout(progPush, 1500);
+}
+function progPush() {
+  if (!econ.online || !econ.ready || !econ.progReady || !acct) return;
+  const v = JSON.stringify(progGet());
+  if (v === progSent) return;
+  progSent = v;
+  // 走佇列:斷線時留著,恢復後補送;只留最新的一筆
+  econ.queue = econ.queue.filter((o) => !(o.t === "store" && o.key === "progress"));
+  econPush({ t: "store", key: "progress", v, pub: false, order: 3 });
+}
+// 合併兩份進度:買過、解鎖過的都留著(取聯集、取最大),裝備選擇以 b 為準。a、b 可以是 null
+function progMerge(a, b) {
+  if (!a) return clone(b || PROG_DEFAULT);
+  if (!b) return clone(a);
+  const uni = (x, y) => [...new Set([...(x || []), ...(y || [])])];
+  const maxObj = (x, y) => {
+    const o = { ...(x || {}) };
+    for (const [k, v] of Object.entries(y || {})) o[k] = Math.max(o[k] || 0, v || 0);
+    return o;
+  };
+  // 日期字串是 "2026-11-5" 這種格式(沒有補 0),轉成數字才能比大小
+  const dn = (s) => {
+    const [y, m, d] = String(s || "0-0-0").split("-").map(Number);
+    return (y || 0) * 10000 + (m || 0) * 100 + (d || 0);
+  };
+  const m = {
+    up: maxObj(a.up, b.up),
+    lv: maxObj(a.lv, b.lv),
+    unlocked: uni(a.unlocked, b.unlocked),
+    acc: uni(a.acc, b.acc),
+    skins: uni(a.skins, b.skins),
+    skinEq: { ...(a.skinEq || {}), ...(b.skinEq || {}) },
+  };
+  m.accEq = b.accEq || a.accEq || null; // b 沒裝備時沿用 a 的
+  if (m.accEq && !m.acc.includes(m.accEq)) m.accEq = null;
+  // 上線紀錄:同一輪就把天數合起來,不同輪用比較新的那一輪
+  const sa = a.streak || {}, sb = b.streak || {};
+  if (sa.start && sa.start === sb.start)
+    m.streak = { start: sa.start, days: uni(sa.days, sb.days).sort((x, y) => dn(x) - dn(y)) };
+  else m.streak = clone(dn(sa.start) > dn(sb.start) ? sa : sb);
+  // 今日勝場:同一天取比較多的;不同天用比較新的那天
+  const da = a.daily || {}, db = b.daily || {};
+  if (da.date && da.date === db.date) m.daily = { date: da.date, wins: Math.max(da.wins || 0, db.wins || 0), m5: !!(da.m5 || db.m5) };
+  else m.daily = clone(dn(da.date) > dn(db.date) ? da : db);
+  return clone({ ...PROG_DEFAULT, ...m });
 }
 
 // ── 頭像同步 ──

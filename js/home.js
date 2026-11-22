@@ -30,8 +30,10 @@ function updHome() {
   // 還沒練習過:練習按鈕閃爍提醒
   document.getElementById("hTut").classList.toggle("hint", !P.tutDone);
   document.getElementById("hMenu").classList.toggle("hint", !P.tutDone); // 練習在選單裡,選單按鈕也閃
-  if (typeof updUnlocks === "function") updUnlocks(); // 功能慢慢解鎖(onboarding.js)
+  if (typeof updAcctBtn === "function") updAcctBtn(); // 首頁的頭像標籤:登入名稱 / 未登入 / 換頭像
   document.getElementById("hPass").textContent = "🎟️ " + P.passes;
+  const warn = document.getElementById("hWarn");
+  warn.style.display = !STORAGE_OK && !acct ? "" : "none";
   document.getElementById("play").textContent = "出擊!";
 }
 // 首頁的一行提示(例如通行卷用完了),幾秒後自動消失
@@ -79,6 +81,10 @@ function startMatch() {
 }
 document.getElementById("play").onclick = startMatch;
 document.getElementById("hPassMath").onclick = () => startMath({ pass: true });
+// 存不了檔的提示:按下去直接到登入畫面
+document.getElementById("hWarn").innerHTML =
+  "⚠️ 這台裝置沒辦法保存進度,關掉遊戲就會不見<small>按這裡登入帳號,進度會存在帳號裡</small>";
+document.getElementById("hWarn").onclick = () => showAcct();
 // 首頁右下角的版本號(開發環境另外標示)
 document.getElementById("ver").textContent =
   "v" + APP_VERSION + (ENV_NAME === "development" ? " · dev" : "");

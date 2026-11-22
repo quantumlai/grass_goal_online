@@ -86,7 +86,7 @@ function streakHTML() {
 
 function onMatchEnd(res) {
   ensureDaily();
-  P.played = (P.played || 0) + 1; // 打完幾場正式比賽(功能解鎖用,見 onboarding.js)
+  P.played = (P.played || 0) + 1; // 打完幾場正式比賽
   sfxPlay(res === "win" ? "win" : res === "tie" ? "tie" : "lose"); // 只在自己的裝置播,不送給房間
   const r = res === "win" ? WIN_ENERGY : res === "tie" ? TIE_ENERGY : LOSE_ENERGY,
     en = rnd(r[0], r[1]),

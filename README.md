@@ -442,7 +442,7 @@
 
 ### 裝置上存了什麼
 
-這台裝置只會記住 Email、名稱、玩家 ID 和 LootLocker 發的登入 token（存在 `localStorage` 的 `brawlAccount_<環境>`），**不會**記住密碼。開發環境和正式環境的登入狀態分開存。所有 LootLocker 請求都有 15 秒逾時。
+這台裝置只會記住 Email、名稱、玩家 ID 和 LootLocker 發的登入 token（存在 `localStorage` 的 `brawlAccount_<環境>`），**不會**記住密碼。另外 `brawlLastEmail_<環境>` 記住上次登入的 Email：登出或登入失效後也留著，登入畫面會自動帶入，只要打密碼。登入表單有標 `autocomplete="username"` / `"current-password"`，iPad 的鑰匙圈（密碼自動填入）也能幫忙填。開發環境和正式環境的登入狀態分開存。所有 LootLocker 請求都有 15 秒逾時。
 
 **LootLocker 後台需要先做的設定：** 到後台啟用 **White Label Login** 平台。目前沒有開 Email 驗證，所以畫面不會提示去收驗證信；如果之後要開，記得把建立帳號後的提示改回來（[js/account.js](js/account.js)）。還沒啟用之前，API 會回傳 `platform is not enabled`，畫面上會顯示「帳號功能還沒開通」。
 

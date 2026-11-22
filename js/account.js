@@ -4,6 +4,7 @@ const acctScr = document.getElementById("acct"),
   aEl = (id) => document.getElementById(id),
   ACCT_KEY = "brawlAccount_" + ENV_NAME, // 開發、正式環境的帳號分開存
   PEND_KEY = "brawlPendingName_" + ENV_NAME, // 註冊時沒設成功的名稱,第一次登入時補設
+  LAST_KEY = "brawlLastEmail_" + ENV_NAME, // 上次登入的 Email:登出或登入失效後也留著,下次只要打密碼
   NAME_MIN = 2,
   NAME_MAX = 16,
   EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -49,6 +50,14 @@ function view(v) {
   const off = { aLogin: "aLMsg", aForm: "aMsg", aReset: "aRMsg" }[v];
   if (off && !llReady()) setMsg(off, ENV.name + "還沒設定 LootLocker,暫時不能使用帳號功能。", "err");
   if (v === "aMe") renderMe();
+  if (v === "aLogin") fillLastEmail();
+}
+// 登入畫面:Email 自動帶上次登入的,游標直接放在密碼(電腦上;手機不自動跳鍵盤)
+function fillLastEmail() {
+  const em = aEl("aLEmail"),
+    last = store.get(LAST_KEY);
+  if (!em.value && last) em.value = last;
+  if (em.value && !matchMedia("(pointer: coarse)").matches) setTimeout(() => aEl("aLPw").focus(), 0);
 }
 function showAcct(v) {
   homeOn = true;
@@ -108,6 +117,7 @@ async function finishLogin(email, wlToken) {
     session: s.session_token,
   };
   store.set(ACCT_KEY, acct);
+  store.set(LAST_KEY, email);
   updAcctBtn();
   econSync(); // 背景同步金幣、能量、排行榜,不擋住登入畫面
   avatarSync(); // 頭像(跟金幣分開同步)

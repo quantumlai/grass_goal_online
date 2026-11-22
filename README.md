@@ -471,6 +471,8 @@
 ```
 index.html        頁面結構
 css/style.css     樣式
+assets/icons/     網站圖示（冰霜）：favicon.svg、favicon-32/48.png、apple-touch-icon.png（加入主畫面的圖示）。
+                  由 print/favicon.mjs 產生（Mac 上執行 node print/favicon.mjs，角色造型改了就重跑）
 js/
   config.js       開發／正式環境設定（LootLocker 網域與金鑰）
   lootlocker.js   LootLocker API（註冊、登入、自動登入、登出、名稱、重設密碼）
